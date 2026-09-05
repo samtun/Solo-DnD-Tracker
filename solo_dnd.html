@@ -202,7 +202,8 @@
             /* Aligned to left */
             z-index: 1001;
             font-size: 18px;
-            padding: 6px 12px;
+            width: 40px;
+            padding: 6px 0px;
             background-color: var(--panel-bg);
             border: 1px solid var(--border);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
@@ -232,23 +233,11 @@
             flex-direction: column;
             gap: 15px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-        }
-
-        #game-menu {
-            left: -280px;
+            right: -280px;
             border-right: 2px solid var(--border);
         }
 
-        #game-menu.open {
-            left: 0;
-        }
-
-        #init-menu {
-            right: -280px;
-            border-left: 2px solid var(--border);
-        }
-
-        #init-menu.open {
+        .slide-menu.open {
             right: 0;
         }
 
@@ -333,6 +322,10 @@
             flex-direction: column;
             gap: 6px;
         }
+
+        .blue-color-filter {
+            filter: hue-rotate(200deg) saturate(1.2);
+        }
     </style>
 </head>
 
@@ -383,23 +376,24 @@
     <div id="main-area">
         <div id="toolbar">
             <div class="controls-group" style="border-right: 2px solid var(--border); padding-right: 15px;">
-                <button id="btn-mode-room" class="active-toggle" onclick="toggleMode('room')"
-                    title="Room Mode">🔲</button>
-                <button id="btn-mode-token" onclick="toggleMode('token')" title="Token Mode">♟️</button>
+                <button id="btn-mode-room" class="active-toggle" onclick="toggleMode('room')" title="Room Mode"><span
+                        class="blue-color-filter">🧱</span></button>
+                <button id="btn-mode-token" onclick="toggleMode('token')" title="Token Mode"><span
+                        class="blue-color-filter">🧑</span></button>
             </div>
 
             <div id="controls-room" class="controls-group">
-                <input type="text" id="r-name" class="name-input" placeholder="Name">
-                W: <input type="number" id="r-w" value="30" class="mini-input">
-                H: <input type="number" id="r-h" value="30" class="mini-input">
-                X: <input type="number" id="r-x" value="0" class="mini-input">
-                Y: <input type="number" id="r-y" value="0" class="mini-input">
+                <input type="text" id="r-name" class="name-input" placeholder="Room Name">
+                W: <input type="number" id="r-w" value="30" step="5" min="0" class="mini-input">
+                H: <input type="number" id="r-h" value="30" step="5" min="0" class="mini-input">
+                X: <input type="number" id="r-x" value="0" step="5" min="0" class="mini-input">
+                Y: <input type="number" id="r-y" value="0" step="5" min="0" class="mini-input">
                 <input type="color" id="r-color" value="#a6e3a1" title="Room Color">
                 <button onclick="addRoom()">Add</button>
             </div>
 
             <div id="controls-token" class="controls-group hidden">
-                <input type="text" id="t-name" class="name-input" placeholder="Name">
+                <input type="text" id="t-name" class="name-input" placeholder="Token Name">
                 Size:
                 <select id="t-size" style="width: 70px;">
                     <option value="5">M/S</option>
@@ -407,9 +401,9 @@
                     <option value="15">H</option>
                     <option value="20">G</option>
                 </select>
-                X: <input type="number" id="t-x" value="0" class="mini-input">
-                Y: <input type="number" id="t-y" value="0" class="mini-input">
-                <input type="color" id="t-color" value="#f38ba8" title="Token Color">
+                X: <input type="number" id="t-x" value="0" step="5" min="0" class="mini-input">
+                Y: <input type="number" id="t-y" value="0" step="5" min="0" class="mini-input">
+                <input type="color" id="t-color" value="#3884ff" title="Token Color">
                 <button onclick="addToken()">Add</button>
             </div>
         </div>
@@ -417,7 +411,7 @@
         <!-- Float Overlays -->
         <button id="menu-toggle-btn" class="overlay-btn" onclick="toggleMenu('game-menu', 'menu-toggle-btn')">☰</button>
         <button id="init-toggle-btn" class="overlay-btn" onclick="toggleMenu('init-menu', 'init-toggle-btn')"
-            title="Initiative Tracker">⚔️</button>
+            title="Initiative Tracker"><span class="blue-color-filter">⚔️</span></button>
 
         <!-- Left Menu: Settings & Tools -->
         <div id="game-menu" class="slide-menu">
