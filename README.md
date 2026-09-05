@@ -5,6 +5,8 @@ It also makes quite a nice tool for DMs that want to play through some encounter
 
 Based on the [One Page Solo Engine by Inflatable Studios](https://inflatablestudios.itch.io/one-page-solo-engine)
 
+![Example](example.png)
+
 ## Features
 
 * A digital 5x5 ft game board
