@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5e Solo Engine & Encounter Tracker</title>
+    <style>
+        :root {
+            --bg-color: #1e1e2e;
+            --panel-bg: #2a2a3f;
+            --text-color: #cdd6f4;
+            --accent: #cba6f7;
+            --border: #45475a;
+            --grid-size: 40px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 330px;
+            min-width: 330px;
+            background-color: var(--panel-bg);
+            border-right: 2px solid var(--border);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-sizing: border-box;
+        }
+
+        .sidebar-section {
+            flex-shrink: 0;
+        }
+
+        #log-section {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        #main-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        #toolbar {
+            background-color: var(--panel-bg);
+            border-bottom: 2px solid var(--border);
+            padding: 10px 15px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            overflow-x: auto;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        #map-container {
+            flex-grow: 1;
+            overflow: auto;
+            background-color: #181825;
+            position: relative;
+            cursor: grab;
+        }
+
+        #map-container:active {
+            cursor: grabbing;
+        }
+
+        #grid {
+            width: 3000px;
+            height: 3000px;
+            /* Default grid background */
+            background-image:
+                linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: var(--grid-size) var(--grid-size);
+            position: relative;
+        }
+
+        button {
+            background-color: var(--border);
+            color: var(--text-color);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background-color: var(--accent);
+            color: #000;
+        }
+
+        button.active-toggle {
+            background-color: var(--accent);
+            color: #000;
+        }
+
+        input,
+        select {
+            background-color: #11111b;
+            color: var(--text-color);
+            border: 1px solid var(--border);
+            padding: 4px 6px;
+            border-radius: 4px;
+        }
+
+        .mini-input {
+            width: 45px;
+        }
+
+        .name-input {
+            width: 80px;
+        }
+
+        input[type="color"] {
+            width: 30px;
+            height: 28px;
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .log-box {
+            background-color: #11111b;
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 4px;
+            flex-grow: 1;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .grid-item {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            text-align: center;
+            font-size: 12px;
+            box-sizing: border-box;
+            user-select: none;
+            border-width: 2px;
+            cursor: pointer;
+        }
+
+        .room {
+            border-style: dashed;
+        }
+
+        .token {
+            border-style: solid;
+            border-radius: 50%;
+            cursor: grab;
+        }
+
+        .token:active {
+            cursor: grabbing;
+        }
+
+        .row {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .controls-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Slide-out Menus & Toggle Buttons */
+        .overlay-btn {
+            position: absolute;
+            left: 15px;
+            /* Aligned to left */
+            z-index: 1001;
+            font-size: 18px;
+            padding: 6px 12px;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        #menu-toggle-btn {
+            top: 70px;
+        }
+
+        #init-toggle-btn {
+            top: 120px;
+        }
+
+        /* Stacked below the hamburger menu */
+
+        .slide-menu {
+            position: absolute;
+            top: 0;
+            width: 260px;
+            height: 100%;
+            background-color: var(--panel-bg);
+            z-index: 1000;
+            transition: 0.3s ease;
+            padding: 60px 20px 20px 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        #game-menu {
+            left: -280px;
+            border-right: 2px solid var(--border);
+        }
+
+        #game-menu.open {
+            left: 0;
+        }
+
+        #init-menu {
+            right: -280px;
+            border-left: 2px solid var(--border);
+        }
+
+        #init-menu.open {
+            right: 0;
+        }
+
+        .menu-btn {
+            width: 100%;
+            text-align: left;
+            padding: 10px;
+            margin-bottom: 5px;
+        }
+
+        .danger-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .danger-btn:hover {
+            background-color: #c0392b;
+            color: white;
+        }
+
+        hr.menu-hr {
+            border-color: var(--border);
+            width: 100%;
+            margin: 5px 0;
+            border-bottom: none;
+        }
+
+        /* Initiative Tracker List */
+        #init-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .init-item {
+            background-color: #11111b;
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .init-item.active-turn {
+            border-color: var(--accent);
+            background-color: rgba(203, 166, 247, 0.15);
+            box-shadow: 0 0 8px rgba(203, 166, 247, 0.4);
+        }
+
+        /* Tooltip */
+        #item-tooltip {
+            position: absolute;
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 2000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            width: 180px;
+        }
+
+        .tooltip-row {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .init-section {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 2px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="sidebar">
+        <div class="sidebar-section">
+            <div class="row" style="margin-bottom: 5px;">
+                <select id="oracle-likelihood">
+                    <option value="3">Likely (3+)</option>
+                    <option value="4" selected>Even (4+)</option>
+                    <option value="5">Unlikely (5+)</option>
+                </select>
+                <button onclick="rollOracleYesNo()">Oracle (Yes/No)</button>
+            </div>
+            <div class="row" style="flex-wrap: wrap; margin-bottom: 5px;">
+                <button onclick="rollOracleHow()">Oracle (How)</button>
+                <button onclick="drawCard()">Draw Card (Focus)</button>
+            </div>
+            <div class="row" style="flex-wrap: wrap;">
+                <button onclick="rollSceneComplication()">Scene Comp.</button>
+                <button onclick="rollPacingMove()">Pacing Move</button>
+                <button onclick="rollFailureMove()">Failure Move</button>
+            </div>
+        </div>
+
+        <hr style="width: 100%; border-color: var(--border); margin: 0;">
+
+        <div class="sidebar-section">
+            <div class="row" style="flex-wrap: wrap;">
+                <button onclick="rollDiceLog(4)">d4</button>
+                <button onclick="rollDiceLog(6)">d6</button>
+                <button onclick="rollDiceLog(8)">d8</button>
+                <button onclick="rollDiceLog(10)">d10</button>
+                <button onclick="rollDiceLog(12)">d12</button>
+                <button onclick="rollDiceLog(20)">d20</button>
+                <button onclick="rollDiceLog(100)">d100</button>
+            </div>
+        </div>
+
+        <div id="log-section">
+            <div id="log" class="log-box"></div>
+            <button onclick="document.getElementById('log').innerHTML=''"
+                style="margin-top: 5px; width: 100%; flex-shrink: 0;">Clear Log</button>
+        </div>
+    </div>
+
+    <div id="main-area">
+        <div id="toolbar">
+            <div class="controls-group" style="border-right: 2px solid var(--border); padding-right: 15px;">
+                <button id="btn-mode-room" class="active-toggle" onclick="toggleMode('room')"
+                    title="Room Mode">🔲</button>
+                <button id="btn-mode-token" onclick="toggleMode('token')" title="Token Mode">♟️</button>
+            </div>
+
+            <div id="controls-room" class="controls-group">
+                <input type="text" id="r-name" class="name-input" placeholder="Name">
+                W: <input type="number" id="r-w" value="30" class="mini-input">
+                H: <input type="number" id="r-h" value="30" class="mini-input">
+                X: <input type="number" id="r-x" value="0" class="mini-input">
+                Y: <input type="number" id="r-y" value="0" class="mini-input">
+                <input type="color" id="r-color" value="#a6e3a1" title="Room Color">
+                <button onclick="addRoom()">Add</button>
+            </div>
+
+            <div id="controls-token" class="controls-group hidden">
+                <input type="text" id="t-name" class="name-input" placeholder="Name">
+                Size:
+                <select id="t-size" style="width: 70px;">
+                    <option value="5">M/S</option>
+                    <option value="10">L</option>
+                    <option value="15">H</option>
+                    <option value="20">G</option>
+                </select>
+                X: <input type="number" id="t-x" value="0" class="mini-input">
+                Y: <input type="number" id="t-y" value="0" class="mini-input">
+                <input type="color" id="t-color" value="#f38ba8" title="Token Color">
+                <button onclick="addToken()">Add</button>
+            </div>
+        </div>
+
+        <!-- Float Overlays -->
+        <button id="menu-toggle-btn" class="overlay-btn" onclick="toggleMenu('game-menu', 'menu-toggle-btn')">☰</button>
+        <button id="init-toggle-btn" class="overlay-btn" onclick="toggleMenu('init-menu', 'init-toggle-btn')"
+            title="Initiative Tracker">⚔️</button>
+
+        <!-- Left Menu: Settings & Tools -->
+        <div id="game-menu" class="slide-menu">
+            <div style="font-weight: bold; margin-bottom: 5px;">Data</div>
+            <button class="menu-btn" onclick="exportState()">💾 Export Session</button>
+            <button class="menu-btn" onclick="triggerImport()">📂 Import Session</button>
+            <input type="file" id="import-file" style="display:none" accept=".json" onchange="importState(event)">
+
+            <hr class="menu-hr">
+
+            <div style="font-weight: bold; margin-bottom: 5px; margin-top: 5px;">Map Background</div>
+            <input type="file" id="bg-import" style="display:none" accept="image/*" onchange="importBackground(event)">
+            <button class="menu-btn" onclick="document.getElementById('bg-import').click()">🖼️ Set Background
+                Image</button>
+            <button class="menu-btn" onclick="clearBackground()" style="margin-top:-5px;">🚫 Clear Background</button>
+
+            <hr class="menu-hr">
+
+            <div style="font-weight: bold; margin-bottom: 5px; margin-top: 5px;">Clear Board</div>
+            <button class="menu-btn" onclick="clearTokens()">🗑️ Clear Tokens</button>
+            <button class="menu-btn" onclick="clearRooms()">🗑️ Clear Rooms</button>
+            <button class="menu-btn danger-btn" onclick="clearAll()">⚠️ Clear Tokens & Rooms</button>
+        </div>
+
+        <!-- Right Menu: Initiative Tracker -->
+        <div id="init-menu" class="slide-menu">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="font-weight: bold;">Initiative Tracker</div>
+            </div>
+            <button onclick="nextTurn()"
+                style="background-color: var(--accent); color: #111; margin-bottom: 10px; padding: 10px;">⏭️ Next
+                Turn</button>
+
+            <div id="init-list">
+                <!-- Initiative items generated here -->
+            </div>
+        </div>
+
+        <div id="map-container">
+            <div id="grid"></div>
+
+            <!-- Properties Tooltip -->
+            <div id="item-tooltip" class="hidden">
+
+                <!-- Initiative Add/Edit Section (Tokens Only) -->
+                <div id="edit-init-section" class="init-section">
+                    <div class="tooltip-row">
+                        <span>HP: <input type="number" id="edit-hp" style="width: 40px;"></span>
+                        <span>Init: <input type="number" id="edit-init" style="width: 40px;"></span>
+                    </div>
+                    <button onclick="addOrUpdateInitiative()" style="width: 100%;">⚔️ Set / Update Initiative</button>
+                </div>
+
+                <!-- Standard Properties -->
+                <input type="text" id="edit-name" style="width: 100%; box-sizing: border-box; font-weight: bold;">
+
+                <div id="edit-room-dims" class="tooltip-row hidden">
+                    W: <input type="number" id="edit-w" class="mini-input">
+                    H: <input type="number" id="edit-h" class="mini-input">
+                </div>
+                <div id="edit-token-dims" class="tooltip-row hidden">
+                    Size: <select id="edit-size" style="width: 80px;">
+                        <option value="5">M/S (5)</option>
+                        <option value="10">L (10)</option>
+                        <option value="15">H (15)</option>
+                        <option value="20">G (20)</option>
+                    </select>
+                </div>
+
+                <div class="tooltip-row">
+                    X: <input type="number" id="edit-x" class="mini-input">
+                    Y: <input type="number" id="edit-y" class="mini-input">
+                </div>
+                <div class="tooltip-row">
+                    Color: <input type="color" id="edit-color">
+                </div>
+                <div class="tooltip-row" style="margin-top: 5px;">
+                    <button onclick="saveEdit()" style="flex-grow: 1;">Save</button>
+                    <button onclick="deleteElement()" style="background-color: #f38ba8; color: #111;">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System Initialization & State
+        const LOG = document.getElementById('log');
+        const GRID = document.getElementById('grid');
+        const PIXELS_PER_FT = 8; // 5ft = 40px
+
+        let currentBgUrl = '';
+        let initiativeList = [];
+        let activeTurnIndex = 0;
+
+        let deck = [];
+        const suits = [
+            "Physical (appearance, existence)", "Technical (mental, operation)",
+            "Mystical (meaning, capability)", "Social (personal, connection)"
+        ];
+        const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+
+        function initDeck() {
+            deck = [];
+            for (let s of suits) for (let r of ranks) deck.push({ rank: r, suit: s });
+            deck.push({ rank: "Joker", suit: "None" }, { rank: "Joker", suit: "None" });
+        }
+        initDeck();
+
+        // Menu Logic
+        function toggleMenu(menuId, btnId) {
+            const menu = document.getElementById(menuId);
+            const btn = document.getElementById(btnId);
+            const isOpen = menu.classList.toggle('open');
+
+            if (menuId === 'game-menu') {
+                btn.innerHTML = isOpen ? '✕' : '☰';
+            } else if (menuId === 'init-menu') {
+                btn.innerHTML = isOpen ? '✕' : '⚔️';
+            }
+        }
+
+        // Clear Options
+        function clearTokens() {
+            if (confirm("Are you sure you want to clear all tokens?")) {
+                document.querySelectorAll('.token').forEach(el => el.remove());
+                initiativeList = [];
+                activeTurnIndex = 0;
+                renderInitiativeTracker();
+                hideTooltip();
+            }
+        }
+
+        function clearRooms() {
+            if (confirm("Are you sure you want to clear all rooms?")) {
+                document.querySelectorAll('.room').forEach(el => el.remove());
+                hideTooltip();
+            }
+        }
+
+        function clearAll() {
+            if (confirm("Are you sure you want to wipe the entire board?")) {
+                document.querySelectorAll('.grid-item').forEach(el => el.remove());
+                initiativeList = [];
+                activeTurnIndex = 0;
+                renderInitiativeTracker();
+                hideTooltip();
+            }
+        }
+
+        // Background Map Logic
+        function importBackground(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentBgUrl = e.target.result;
+                applyBackground();
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function clearBackground() {
+            currentBgUrl = '';
+            applyBackground();
+        }
+
+        function applyBackground() {
+            if (currentBgUrl) {
+                GRID.style.backgroundImage = `
+                linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px),
+                url('${currentBgUrl}')`;
+                GRID.style.backgroundSize = `var(--grid-size) var(--grid-size), var(--grid-size) var(--grid-size), auto`;
+                GRID.style.backgroundPosition = `top left, top left, top left`;
+                GRID.style.backgroundRepeat = `repeat, repeat, no-repeat`;
+            } else {
+                GRID.style.backgroundImage = `
+                linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px)`;
+                GRID.style.backgroundSize = `var(--grid-size) var(--grid-size)`;
+                GRID.style.backgroundRepeat = `repeat`;
+            }
+        }
+
+        // Import / Export Logic
+        function exportState() {
+            const elements = Array.from(document.querySelectorAll('.grid-item')).map(el => ({
+                id: el.dataset.id,
+                type: el.dataset.type,
+                name: el.dataset.name,
+                w: el.dataset.w,
+                h: el.dataset.h,
+                x: el.dataset.x,
+                y: el.dataset.y,
+                color: el.dataset.color
+            }));
+
+            const state = {
+                map: elements,
+                log: LOG.innerHTML,
+                bgUrl: currentBgUrl,
+                initiative: initiativeList,
+                activeTurn: activeTurnIndex
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", "solo_session.json");
+            dl.click();
+        }
+
+        function triggerImport() { document.getElementById('import-file').click(); }
+
+        function importState(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const state = JSON.parse(e.target.result);
+                    GRID.innerHTML = '';
+                    hideTooltip();
+
+                    if (state.map) {
+                        state.map.forEach(i => {
+                            createMapElement(i.type, i.name, parseInt(i.w), parseInt(i.h), parseInt(i.x), parseInt(i.y), i.color, i.id);
+                        });
+                    }
+                    if (state.log !== undefined) {
+                        LOG.innerHTML = state.log;
+                        LOG.scrollTop = LOG.scrollHeight;
+                    }
+                    if (state.bgUrl !== undefined) {
+                        currentBgUrl = state.bgUrl;
+                        applyBackground();
+                    }
+                    if (state.initiative !== undefined) {
+                        initiativeList = state.initiative;
+                        activeTurnIndex = state.activeTurn || 0;
+                        renderInitiativeTracker();
+                    }
+
+                    if (document.getElementById('game-menu').classList.contains('open')) {
+                        toggleMenu('game-menu', 'menu-toggle-btn');
+                    }
+                } catch (err) { alert("Invalid save file."); }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // Map Panning Logic
+        const mapContainer = document.getElementById('map-container');
+        let isPanning = false;
+        let startX, startY, scrollLeft, scrollTop;
+
+        mapContainer.addEventListener('mousedown', (e) => {
+            if (e.button !== 0 ||
+                e.target.closest('.grid-item') ||
+                e.target.closest('#item-tooltip') ||
+                e.target.closest('.slide-menu') ||
+                e.target.closest('.overlay-btn')) return;
+
+            isPanning = true;
+            startX = e.pageX - mapContainer.offsetLeft;
+            startY = e.pageY - mapContainer.offsetTop;
+            scrollLeft = mapContainer.scrollLeft;
+            scrollTop = mapContainer.scrollTop;
+        });
+
+        mapContainer.addEventListener('mouseleave', () => { isPanning = false; });
+        mapContainer.addEventListener('mouseup', () => { isPanning = false; });
+        mapContainer.addEventListener('mousemove', (e) => {
+            if (!isPanning) return;
+            e.preventDefault();
+            mapContainer.scrollLeft = scrollLeft - ((e.pageX - mapContainer.offsetLeft) - startX);
+            mapContainer.scrollTop = scrollTop - ((e.pageY - mapContainer.offsetTop) - startY);
+        });
+
+        // Initiative Tracker Logic
+        function addOrUpdateInitiative() {
+            if (!activeElement) return;
+            const id = activeElement.dataset.id;
+            const name = document.getElementById('edit-name').value || "Unnamed";
+            const hp = parseInt(document.getElementById('edit-hp').value) || 0;
+            const init = parseInt(document.getElementById('edit-init').value) || 0;
+
+            const existingIndex = initiativeList.findIndex(i => i.id === id);
+
+            if (existingIndex > -1) {
+                initiativeList[existingIndex] = { id, name, hp, init };
+            } else {
+                initiativeList.push({ id, name, hp, init });
+            }
+
+            sortAndRenderInitiative();
+        }
+
+        function removeInitiativeItem(id) {
+            const index = initiativeList.findIndex(i => i.id === id);
+            if (index > -1) {
+                if (index < activeTurnIndex) {
+                    activeTurnIndex--;
+                } else if (index === activeTurnIndex && activeTurnIndex === initiativeList.length - 1) {
+                    activeTurnIndex = 0;
+                }
+                initiativeList.splice(index, 1);
+                if (initiativeList.length === 0) activeTurnIndex = 0;
+                renderInitiativeTracker();
+            }
+        }
+
+        function sortAndRenderInitiative() {
+            initiativeList.sort((a, b) => b.init - a.init);
+            if (activeTurnIndex >= initiativeList.length) activeTurnIndex = 0;
+            renderInitiativeTracker();
+        }
+
+        function nextTurn() {
+            if (initiativeList.length === 0) return;
+            activeTurnIndex = (activeTurnIndex + 1) % initiativeList.length;
+            renderInitiativeTracker();
+        }
+
+        function updateTrackerHP(id, val) {
+            const item = initiativeList.find(i => i.id === id);
+            if (item) item.hp = parseInt(val) || 0;
+            if (activeElement && activeElement.dataset.id === id) {
+                document.getElementById('edit-hp').value = item.hp;
+            }
+        }
+
+        function renderInitiativeTracker() {
+            const listDiv = document.getElementById('init-list');
+            listDiv.innerHTML = '';
+
+            initiativeList.forEach((item, index) => {
+                const el = document.createElement('div');
+                el.className = 'init-item' + (index === activeTurnIndex ? ' active-turn' : '');
+
+                el.innerHTML = `
+                <div style="flex-grow: 1; margin-right: 10px;">
+                    <div style="font-weight: bold; margin-bottom: 4px; font-size: 14px;">${item.name} <span style="font-weight:normal; color:#a6adc8;">(Roll: ${item.init})</span></div>
+                    <div style="display:flex; align-items:center; gap: 5px;">
+                        HP: <input type="number" value="${item.hp}" style="width: 50px; padding: 2px;" onchange="updateTrackerHP('${item.id}', this.value)">
+                    </div>
+                </div>
+                <button class="danger-btn" onclick="removeInitiativeItem('${item.id}')" title="Remove from Tracker" style="padding: 4px 8px; font-size:12px;">✕</button>
+            `;
+                listDiv.appendChild(el);
+            });
+        }
+
+        // Edit Tooltip Logic
+        let activeElement = null;
+        const tooltip = document.getElementById('item-tooltip');
+
+        function showTooltip(el, e) {
+            activeElement = el;
+            const isRoom = el.dataset.type === 'room';
+
+            document.getElementById('edit-name').value = el.dataset.name;
+            document.getElementById('edit-x').value = el.dataset.x;
+            document.getElementById('edit-y').value = el.dataset.y;
+            document.getElementById('edit-color').value = el.dataset.color;
+
+            document.getElementById('edit-room-dims').classList.toggle('hidden', !isRoom);
+            document.getElementById('edit-token-dims').classList.toggle('hidden', isRoom);
+            document.getElementById('edit-init-section').classList.toggle('hidden', isRoom);
+
+            if (isRoom) {
+                document.getElementById('edit-w').value = el.dataset.w;
+                document.getElementById('edit-h').value = el.dataset.h;
+            } else {
+                document.getElementById('edit-size').value = el.dataset.w;
+                const initData = initiativeList.find(i => i.id === el.dataset.id);
+                document.getElementById('edit-init').value = initData ? initData.init : '';
+                document.getElementById('edit-hp').value = initData ? initData.hp : '';
+            }
+
+            const mainArea = document.getElementById('main-area').getBoundingClientRect();
+            let tLeft = (e.clientX - mainArea.left + 15);
+            let tTop = (e.clientY - mainArea.top + 15);
+
+            tooltip.style.left = tLeft + 'px';
+            tooltip.style.top = tTop + 'px';
+            tooltip.classList.remove('hidden');
+        }
+
+        function hideTooltip() {
+            tooltip.classList.add('hidden');
+            activeElement = null;
+        }
+
+        function saveEdit() {
+            if (!activeElement) return;
+
+            const newName = document.getElementById('edit-name').value;
+            activeElement.dataset.name = newName;
+            activeElement.innerText = newName;
+
+            const nX = parseFloat(document.getElementById('edit-x').value);
+            const nY = parseFloat(document.getElementById('edit-y').value);
+            activeElement.dataset.x = nX; activeElement.dataset.y = nY;
+            activeElement.style.left = (nX * PIXELS_PER_FT) + "px";
+            activeElement.style.top = (nY * PIXELS_PER_FT) + "px";
+
+            const nC = document.getElementById('edit-color').value;
+            activeElement.dataset.color = nC;
+            activeElement.style.borderColor = nC;
+            activeElement.style.backgroundColor = nC + "33";
+
+            if (activeElement.dataset.type === 'room') {
+                const nW = parseFloat(document.getElementById('edit-w').value);
+                const nH = parseFloat(document.getElementById('edit-h').value);
+                activeElement.dataset.w = nW; activeElement.dataset.h = nH;
+                activeElement.style.width = (nW * PIXELS_PER_FT) + "px";
+                activeElement.style.height = (nH * PIXELS_PER_FT) + "px";
+            } else {
+                const nS = parseFloat(document.getElementById('edit-size').value);
+                activeElement.dataset.w = nS; activeElement.dataset.h = nS;
+                activeElement.style.width = (nS * PIXELS_PER_FT) + "px";
+                activeElement.style.height = (nS * PIXELS_PER_FT) + "px";
+
+                const initItem = initiativeList.find(i => i.id === activeElement.dataset.id);
+                if (initItem) {
+                    initItem.name = newName;
+                    renderInitiativeTracker();
+                }
+            }
+            hideTooltip();
+        }
+
+        function deleteElement() {
+            if (activeElement) {
+                if (activeElement.dataset.type === 'token') {
+                    removeInitiativeItem(activeElement.dataset.id);
+                }
+                activeElement.remove();
+                hideTooltip();
+            }
+        }
+
+        document.addEventListener('mousedown', (e) => {
+            if (!tooltip.classList.contains('hidden') && !tooltip.contains(e.target) && !e.target.closest('.grid-item')) {
+                hideTooltip();
+            }
+            const gMenu = document.getElementById('game-menu');
+            const gBtn = document.getElementById('menu-toggle-btn');
+            if (gMenu.classList.contains('open') && !gMenu.contains(e.target) && !gBtn.contains(e.target)) {
+                toggleMenu('game-menu', 'menu-toggle-btn');
+            }
+            const iMenu = document.getElementById('init-menu');
+            const iBtn = document.getElementById('init-toggle-btn');
+            if (iMenu.classList.contains('open') && !iMenu.contains(e.target) && !iBtn.contains(e.target)) {
+                toggleMenu('init-menu', 'init-toggle-btn');
+            }
+        });
+
+        // Token Dragging
+        let draggingToken = null;
+        let dragThreshold = false;
+        let dragOffsetX = 0, dragOffsetY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            if (draggingToken) {
+                dragThreshold = true;
+                hideTooltip();
+                const gridRect = GRID.getBoundingClientRect();
+                draggingToken.style.left = (e.clientX - gridRect.left - dragOffsetX) + "px";
+                draggingToken.style.top = (e.clientY - gridRect.top - dragOffsetY) + "px";
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (draggingToken) {
+                if (!dragThreshold) {
+                    showTooltip(draggingToken, e);
+                } else {
+                    let snapX = Math.max(0, Math.round(parseFloat(draggingToken.style.left) / 40) * 40);
+                    let snapY = Math.max(0, Math.round(parseFloat(draggingToken.style.top) / 40) * 40);
+                    draggingToken.style.left = snapX + "px";
+                    draggingToken.style.top = snapY + "px";
+                    draggingToken.dataset.x = snapX / PIXELS_PER_FT;
+                    draggingToken.dataset.y = snapY / PIXELS_PER_FT;
+                }
+                draggingToken.style.zIndex = "";
+                draggingToken = null;
+            }
+        });
+
+        function toggleMode(mode) {
+            document.getElementById('btn-mode-room').classList.toggle('active-toggle', mode === 'room');
+            document.getElementById('btn-mode-token').classList.toggle('active-toggle', mode === 'token');
+            document.getElementById('controls-room').classList.toggle('hidden', mode !== 'room');
+            document.getElementById('controls-token').classList.toggle('hidden', mode !== 'token');
+        }
+
+        // Engine & Dice Logic
+        function logMsg(msg, color = "#cdd6f4") {
+            const div = document.createElement('div');
+            div.style.color = color;
+            div.style.marginBottom = "6px";
+            div.style.lineHeight = "1.4";
+            div.innerHTML = msg;
+            LOG.appendChild(div);
+            LOG.scrollTop = LOG.scrollHeight;
+        }
+
+        function roll(sides) { return Math.floor(Math.random() * sides) + 1; }
+
+        function rollDiceLog(sides) {
+            let prefix = `d${sides}`;
+
+            // Append active token name if initiative tracker has an active turn
+            if (initiativeList.length > 0 && activeTurnIndex >= 0 && activeTurnIndex < initiativeList.length) {
+                const activeTokenName = initiativeList[activeTurnIndex].name;
+                prefix += ` [${activeTokenName}]`;
+            }
+
+            logMsg(`${prefix}: <strong>${roll(sides)}</strong>`, "#89b4fa");
+        }
+
+        function rollOracleYesNo() {
+            const t = parseInt(document.getElementById('oracle-likelihood').value);
+            const ans = roll(6), mod = roll(6);
+            let str = ans >= t ? "YES" : "NO";
+            str += mod === 1 ? ", but..." : (mod === 6 ? ", and..." : "");
+            logMsg(`Oracle (Yes/No): <strong>${str}</strong> <em>(${ans}, mod: ${mod})</em>`, "#a6e3a1");
+        }
+
+        function rollOracleHow() {
+            const r = roll(6);
+            const tbl = { 1: "Surprisingly lacking", 2: "Less than expected", 3: "About average", 4: "About average", 5: "More than expected", 6: "Extraordinary" };
+            logMsg(`Oracle (How) [${r}]: <strong>${tbl[r]}</strong>`, "#f9e2af");
+        }
+
+        function drawCard() {
+            if (deck.length === 0) initDeck();
+            const card = deck.splice(Math.floor(Math.random() * deck.length), 1)[0];
+            if (card.rank === "Joker") {
+                logMsg(`Drew <strong>JOKER!</strong> Shuffle deck and add a RANDOM EVENT.`, "#f38ba8");
+                initDeck();
+            } else {
+                logMsg(`Card: <strong>${card.rank}</strong> of <em>${card.suit.split(' ')[0]}</em><br><small>${card.suit}</small>`, "#cba6f7");
+            }
+        }
+
+        function rollTable(n, obj) { const r = roll(6); logMsg(`${n} [${r}]: <strong>${obj[r]}</strong>`, "#fab387"); }
+        function rollSceneComplication() { rollTable("Scene Comp", { 1: "Hostile forces oppose you", 2: "Obstacle blocks way", 3: "Wouldn't it suck if...", 4: "NPC acts suddenly", 5: "Not as it seems", 6: "Goes as planned" }); }
+        function rollPacingMove() { rollTable("Pacing Move", { 1: "Foreshadow Trouble", 2: "Reveal Detail", 3: "NPC Takes Action", 4: "Advance Threat", 5: "Advance Plot", 6: "RANDOM EVENT" }); }
+        function rollFailureMove() { rollTable("Failure Move", { 1: "Cause Harm", 2: "Put in a Spot", 3: "Offer Choice", 4: "Advance Threat", 5: "Reveal Truth", 6: "Foreshadow Trouble" }); }
+
+        function createMapElement(type, name, w_ft, h_ft, x_ft, y_ft, color, existingId = null) {
+            const el = document.createElement('div');
+            const id = existingId || Date.now().toString(36) + Math.random().toString(36).substring(2);
+
+            el.className = `grid-item ${type}`;
+            el.style.width = (w_ft * PIXELS_PER_FT) + "px";
+            el.style.height = (h_ft * PIXELS_PER_FT) + "px";
+            el.style.left = (x_ft * PIXELS_PER_FT) + "px";
+            el.style.top = (y_ft * PIXELS_PER_FT) + "px";
+            el.innerText = name;
+
+            el.dataset.id = id;
+            el.dataset.type = type;
+            el.dataset.name = name;
+            el.dataset.w = w_ft;
+            el.dataset.h = h_ft;
+            el.dataset.x = x_ft;
+            el.dataset.y = y_ft;
+            el.dataset.color = color;
+
+            el.style.borderColor = color;
+            el.style.backgroundColor = color + "33";
+
+            if (type === 'token') {
+                el.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    dragThreshold = false;
+                    draggingToken = el;
+                    el.style.zIndex = 1000;
+                    const r = el.getBoundingClientRect();
+                    dragOffsetX = e.clientX - r.left;
+                    dragOffsetY = e.clientY - r.top;
+                });
+            } else {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showTooltip(el, e);
+                });
+            }
+
+            GRID.appendChild(el);
+        }
+
+        function addRoom() {
+            createMapElement('room',
+                document.getElementById('r-name').value || "Room",
+                parseInt(document.getElementById('r-w').value),
+                parseInt(document.getElementById('r-h').value),
+                parseInt(document.getElementById('r-x').value),
+                parseInt(document.getElementById('r-y').value),
+                document.getElementById('r-color').value || "#a6e3a1"
+            );
+        }
+
+        function addToken() {
+            const size = parseInt(document.getElementById('t-size').value);
+            createMapElement('token',
+                document.getElementById('t-name').value || "PC/NPC",
+                size, size,
+                parseInt(document.getElementById('t-x').value),
+                parseInt(document.getElementById('t-y').value),
+                document.getElementById('t-color').value || "#f38ba8"
+            );
+        }
+    </script>
+</body>
+
+</html>
