@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>5e Solo Engine & Encounter Tracker</title>
+    <title>Solo DnD Tracker</title>
     <style>
         :root {
             --bg-color: #1e1e2e;
@@ -80,6 +80,69 @@
 
         #map-container:active {
             cursor: grabbing;
+        }
+
+        #top-ruler {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            width: 3038px;
+            height: 16px;
+            box-sizing: border-box;
+            padding-left: 16px;
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border);
+            color: var(--text-color);
+            font-size: 10px;
+            line-height: 23px;
+            white-space: nowrap;
+        }
+
+        #left-ruler {
+            position: sticky;
+            left: 0;
+            z-index: 9;
+            flex: 0 0 16px;
+            width: 16px;
+            height: 3000px;
+            box-sizing: border-box;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border);
+            color: var(--text-color);
+            font-size: 10px;
+            text-align: right;
+        }
+
+        #map-content {
+            display: flex;
+            width: 3038px;
+            min-height: 3000px;
+        }
+
+        .ruler-label {
+            position: absolute;
+            box-sizing: border-box;
+            line-height: 16px;
+        }
+
+        #top-ruler .ruler-label {
+            top: 0;
+            width: 40px;
+            padding-right: 3px;
+            border-left: 1px solid var(--border);
+            text-align: right;
+        }
+
+        #left-ruler .ruler-label {
+            left: 0;
+            width: 40px;
+            height: 16px;
+            text-align: left;
+            padding-left: 3px;
+            border-right: 1px solid var(--border);
+            line-height: 16px;
+            transform-origin: 0 0;
+            transform: rotate(-90deg);
         }
 
         #grid {
@@ -210,11 +273,11 @@
         }
 
         #menu-toggle-btn {
-            top: 70px;
+            bottom: 30px;
         }
 
         #init-toggle-btn {
-            top: 120px;
+            bottom: 80px;
         }
 
         /* Stacked below the hamburger menu */
@@ -451,7 +514,11 @@
         </div>
 
         <div id="map-container">
-            <div id="grid"></div>
+            <div id="top-ruler" aria-hidden="true"></div>
+            <div id="map-content">
+                <div id="left-ruler" aria-hidden="true"></div>
+                <div id="grid"></div>
+            </div>
 
             <!-- Properties Tooltip -->
             <div id="item-tooltip" class="hidden">
@@ -469,8 +536,8 @@
                 <input type="text" id="edit-name" style="width: 100%; box-sizing: border-box; font-weight: bold;">
 
                 <div id="edit-room-dims" class="tooltip-row hidden">
-                    W: <input type="number" id="edit-w" class="mini-input">
-                    H: <input type="number" id="edit-h" class="mini-input">
+                    W: <input type="number" id="edit-w" step="5" min="0" class="mini-input">
+                    H: <input type="number" id="edit-h" step="5" min="0" class="mini-input">
                 </div>
                 <div id="edit-token-dims" class="tooltip-row hidden">
                     Size: <select id="edit-size" style="width: 80px;">
@@ -482,8 +549,8 @@
                 </div>
 
                 <div class="tooltip-row">
-                    X: <input type="number" id="edit-x" class="mini-input">
-                    Y: <input type="number" id="edit-y" class="mini-input">
+                    X: <input type="number" id="edit-x" step="5" min="0" class="mini-input">
+                    Y: <input type="number" id="edit-y" step="5" min="0" class="mini-input">
                 </div>
                 <div class="tooltip-row">
                     Color: <input type="color" id="edit-color">
@@ -501,6 +568,30 @@
         const LOG = document.getElementById('log');
         const GRID = document.getElementById('grid');
         const PIXELS_PER_FT = 8; // 5ft = 40px
+
+        function initializeRulers() {
+            const topRuler = document.getElementById('top-ruler');
+            const leftRuler = document.getElementById('left-ruler');
+            const gridSizeInFeet = 3000 / PIXELS_PER_FT;
+
+            for (let feet = 5; feet <= gridSizeInFeet; feet += 5) {
+                const offset = (feet / 5 - 1) * 40;
+
+                const topLabel = document.createElement('span');
+                topLabel.className = 'ruler-label';
+                topLabel.style.left = (16 + offset) + 'px';
+                topLabel.textContent = feet;
+                topRuler.appendChild(topLabel);
+
+                const leftLabel = document.createElement('span');
+                leftLabel.className = 'ruler-label';
+                leftLabel.style.top = (offset + 40) + 'px';
+                leftLabel.textContent = feet;
+                leftRuler.appendChild(leftLabel);
+            }
+        }
+
+        initializeRulers();
 
         let currentBgUrl = '';
         let initiativeList = [];

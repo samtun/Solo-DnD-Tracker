@@ -11,7 +11,7 @@ Based on the [One Page Solo Engine by Inflatable Studios](https://inflatablestud
     * Add, edit and remove rooms to game board
     * Add, edit and remove tokens to game board (players, NPCs, etc...)
     * Move tokens via drag and drop
-    * Add background image
+    * Add background image (for reference: 5ft = 40px)
 * Manage hp and initiative of tokens (click token to add it to initiative list)
 * Access Solo Engine options
 * Roll dice (d4 to d100)
