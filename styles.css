@@ -1,0 +1,134 @@
+:root {
+    --ink: #17222b;
+    --paper: #f6f0e5;
+    --panel: #fffaf2;
+    --line: #d8cbb9;
+    --teal: #0f7774;
+    --coral: #d95d4f;
+    --gold: #e3a936;
+    --muted: #68747a;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    background: radial-gradient(circle at 15% 10%, #fff7df 0 16%, transparent 42%), linear-gradient(135deg, #dbe9e3, #f6f0e5 55%, #f0d8c9);
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.shell {
+    width: min(100% - 32px, 1080px);
+    margin: 0 auto;
+    padding: 22px 0 48px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.quiz-page header {
+    margin-bottom: 36px;
+}
+
+.brand {
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font: 700 13px/1.2 'Trebuchet MS', sans-serif;
+}
+
+nav {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+a,
+button {
+    border: 0;
+    border-radius: 3px;
+    padding: 11px 16px;
+    color: var(--ink);
+    background: rgba(255, 250, 242, .7);
+    font: 700 13px 'Trebuchet MS', sans-serif;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a:hover,
+button:hover {
+    background: #fff;
+}
+
+nav a,
+.ghost {
+    border: 1px solid var(--line);
+}
+
+.score {
+    text-align: right;
+    border-left: 2px solid var(--gold);
+    padding-left: 16px;
+}
+
+.score small,
+.eyebrow {
+    display: block;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    font: 700 11px 'Trebuchet MS', sans-serif;
+}
+
+.score strong {
+    color: var(--teal);
+    font-size: 25px;
+}
+
+h1 {
+    margin: 12px 0 28px;
+    font-size: clamp(44px, 8vw, 82px);
+    line-height: .9;
+    font-weight: 500;
+}
+
+.hero,
+.quiz-card,
+.side-panel,
+.board {
+    background: rgba(255, 250, 242, .9);
+    border: 1px solid var(--line);
+    box-shadow: 0 12px 30px rgba(44, 48, 40, .08);
+}
+
+.hidden {
+    display: none !important;
+}
+
+@media (max-width: 760px) {
+    header {
+        align-items: flex-start;
+    }
+
+    .score {
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 500px) {
+    header {
+        flex-wrap: wrap;
+    }
+
+    .score {
+        border-left: 0;
+        padding-left: 0;
+    }
+}

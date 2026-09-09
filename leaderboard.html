@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DM Quiz Leaderboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .board {
+            padding: clamp(22px, 5vw, 54px);
+        }
+
+        .leaderboard-page .eyebrow {
+            color: var(--teal);
+            font-size: 12px;
+        }
+
+        .board-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 20px;
+            border-bottom: 2px solid var(--ink);
+            padding-bottom: 14px;
+            margin-bottom: 4px;
+        }
+
+        .board-head span {
+            color: var(--muted);
+            font: 700 12px 'Trebuchet MS', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+        }
+
+        .entry {
+            display: grid;
+            grid-template-columns: 60px 1fr auto;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .rank {
+            color: var(--gold);
+            font-size: 28px;
+        }
+
+        .entry:first-of-type .rank {
+            color: var(--teal);
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .date {
+            color: var(--muted);
+            font: 12px 'Trebuchet MS', sans-serif;
+        }
+
+        .empty {
+            color: var(--muted);
+            padding: 28px 0;
+        }
+
+        .clear {
+            margin-top: 22px;
+            color: #9c473d;
+        }
+
+        @media(max-width:550px) {
+            .board-head {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .entry {
+                grid-template-columns: 42px 1fr;
+            }
+
+            .entry .date {
+                grid-column: 2;
+            }
+
+            .score {
+                grid-column: 2;
+                grid-row: 1;
+                justify-self: end;
+            }
+        }
+    </style>
+</head>
+
+<body class="leaderboard-page">
+    <div class="shell">
+        <header>
+            <div class="brand">DM Quiz Leaderboard</div>
+            <nav><a href="dm-quiz.html">Back to Quiz</a></nav>
+        </header>
+        <main><span class="eyebrow">Top sessions</span>
+            <h1>Leaderboard</h1>
+            <section class="board">
+                <div class="board-head"><span>Rank / session</span><span>Score</span></div>
+                <div id="entries"></div><button id="clear" class="clear">Clear local scores</button>
+            </section>
+        </main>
+    </div>
+    <script>
+        const key = 'soloDndQuizHighScores', entries = document.getElementById('entries');
+        function render() { const scores = JSON.parse(localStorage.getItem(key) || '[]'); entries.innerHTML = ''; if (!scores.length) { entries.innerHTML = '<div class="empty">No sessions recorded yet. Your chair is waiting.</div>'; return; } scores.forEach((item, index) => { const row = document.createElement('div'); row.className = 'entry'; const date = new Date(item.date); row.innerHTML = `<div class="rank">${String(index + 1).padStart(2, '0')}</div><div><strong>DM Session</strong><div class="date">${date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</div></div><div class="score">${Number(item.score).toLocaleString()}</div>`; entries.appendChild(row); }); }
+        document.getElementById('clear').addEventListener('click', () => { if (confirm('Clear all saved quiz scores?')) { localStorage.removeItem(key); render(); } }); render();
+    </script>
+</body>
+
+</html>
