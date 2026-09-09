@@ -261,8 +261,7 @@
         /* Slide-out Menus & Toggle Buttons */
         .overlay-btn {
             position: absolute;
-            left: 15px;
-            /* Aligned to left */
+            left: 32px;
             z-index: 1001;
             font-size: 18px;
             width: 40px;
@@ -954,13 +953,15 @@
             }
             const gMenu = document.getElementById('game-menu');
             const gBtn = document.getElementById('menu-toggle-btn');
-            if (gMenu.classList.contains('open') && !gMenu.contains(e.target) && !gBtn.contains(e.target)) {
-                toggleMenu('game-menu', 'menu-toggle-btn');
-            }
             const iMenu = document.getElementById('init-menu');
             const iBtn = document.getElementById('init-toggle-btn');
-            if (iMenu.classList.contains('open') && !iMenu.contains(e.target) && !iBtn.contains(e.target)) {
+
+            if (gMenu.classList.contains('open') && iBtn.contains(e.target)) {
+                toggleMenu('game-menu', 'menu-toggle-btn');
+            }
+            if (iMenu.classList.contains('open') && gBtn.contains(e.target)) {
                 toggleMenu('init-menu', 'init-toggle-btn');
+
             }
         });
 

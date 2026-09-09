@@ -7,6 +7,10 @@ Based on the [One Page Solo Engine by Inflatable Studios](https://inflatablestud
 
 ![Example](example.png)
 
+## How to use
+
+* Just open the solo_dnd.html in your browser
+
 ## Features
 
 * A digital 5x5 ft game board
