@@ -32,9 +32,6 @@ header {
     justify-content: space-between;
     align-items: center;
     gap: 20px;
-}
-
-.quiz-page header {
     margin-bottom: 36px;
 }
 
@@ -89,7 +86,7 @@ nav a,
 
 .score strong {
     color: var(--teal);
-    font-size: 25px;
+    font-size: 23px;
 }
 
 h1 {

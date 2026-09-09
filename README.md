@@ -10,7 +10,7 @@ Based on the [One Page Solo Engine by Inflatable Studios](https://inflatablestud
 ## How to use
 
 * Open the solo_dnd.html in your browser
-* Open `dm-quiz.html` directly in a browser. The quiz question bank is embedded for offline and mobile use, and an active quiz session is saved in local storage so it can be resumed after reopening the page.
+* Serve the folder from a local web server before opening `dm-quiz.html`; the quiz loads its formatted question bank from `dm-questions.json`. An active quiz session is saved in local storage so it can be resumed after reopening the page.
 
 ## Features
 
@@ -23,5 +23,5 @@ Based on the [One Page Solo Engine by Inflatable Studios](https://inflatablestud
 * Access Solo Engine options
 * Roll dice (d4 to d100)
 * Import & export rooms, tokens and initiative list
-* DM Quiz Show with a 30-question session, fixed 9,000-point ceiling, and direct or multiple-choice answers
+* DM Quiz Show with a 30-question session, fixed 9,000-point ceiling, and multiple-choice answers
 * Persistent quiz total, resumable sessions, and local leaderboard

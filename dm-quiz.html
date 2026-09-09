@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DM Quiz Show</title>
+    <title>DM Quiz</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         main {
@@ -128,12 +128,47 @@
         }
 
         .choice {
+            display: flex;
+            align-items: stretch;
+            gap: 14px;
             text-align: left;
             color: var(--ink);
             background: #f3eadc;
             border: 1px solid var(--line);
             font: 18px Georgia, serif;
             min-height: 64px;
+        }
+
+        .choice-label {
+            display: flex;
+            align-items: center;
+            flex: 0 0 34px;
+            justify-content: center;
+            margin: -11px 0 -11px -16px;
+            color: #8e806d;
+            background: #e7d9c5;
+            font: 700 14px 'Trebuchet MS', sans-serif;
+        }
+
+        .choice-text {
+            align-self: center;
+            font-weight: 400;
+        }
+
+        .choice:disabled {
+            opacity: 1;
+            cursor: default;
+        }
+
+        .choice:disabled:hover {
+            background: #f3eadc;
+            border-color: var(--line);
+        }
+
+        .choice.selected:disabled,
+        .choice.selected:disabled:hover {
+            background: #d7ece7;
+            border-color: var(--teal);
         }
 
         .choice:hover,
@@ -215,7 +250,8 @@
             <section id="start-screen" class="hero"><span class="eyebrow">30 questions / one table</span>
                 <h1>How sharp is your DM seat?</h1>
                 <p>Warm up the rules knowledge, test your judgment, and see how far your table instincts carry you.</p>
-                <div class="hero-actions"><button id="start-button" class="primary">Start quiz</button></div>
+                <div class="hero-actions"><button id="start-button" class="primary" disabled>Loading
+                        questions...</button></div>
             </section>
             <section id="quiz-screen" class="quiz-card hidden">
                 <div class="quiz-top">
@@ -230,39 +266,459 @@
         </main>
     </div>
     <script>
+        const questions = [
+            {
+                "id": "s1",
+                "difficulty": 1,
+                "question": "How many sides does a standard d20 have?",
+                "options": [
+                    "6",
+                    "8",
+                    "20",
+                    "100"
+                ],
+                "answer": 2
+            },
+            {
+                "id": "s2",
+                "difficulty": 1,
+                "question": "How far can a level 1 character move per turn by default?",
+                "options": [
+                    "10 ft",
+                    "20 ft",
+                    "30 ft",
+                    "60 ft"
+                ],
+                "answer": 2
+            },
+            {
+                "id": "s3",
+                "difficulty": 1,
+                "question": "Which die is most commonly used for a weapon attack roll?",
+                "options": [
+                    "d4",
+                    "d6",
+                    "d20",
+                    "d100"
+                ],
+                "answer": 2
+            },
+            {
+                "id": "s4",
+                "difficulty": 1,
+                "question": "Which ability score is associated with a fighter's physical power?",
+                "options": [
+                    "Strength",
+                    "Wisdom",
+                    "Charisma",
+                    "Intelligence"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "s5",
+                "difficulty": 1,
+                "question": "How many actions does a character normally get on their turn?",
+                "options": [
+                    "None",
+                    "1",
+                    "2",
+                    "3"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "s6",
+                "difficulty": 1,
+                "question": "What does AC stand for?",
+                "options": [
+                    "Action Check",
+                    "Armor Class",
+                    "Attack Charge",
+                    "Arcane Control"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "m1",
+                "difficulty": 2,
+                "question": "Which spell is used for healing?",
+                "options": [
+                    "Healing Word",
+                    "Guidance",
+                    "Fire Bolt",
+                    "Magic Missile"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "m2",
+                "difficulty": 2,
+                "question": "What bonus is added to a d20 roll when a character is proficient with a skill?",
+                "options": [
+                    "Proficiency bonus",
+                    "Armor bonus",
+                    "Spell bonus",
+                    "Level bonus"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "m3",
+                "difficulty": 2,
+                "question": "Which condition prevents a creature from taking actions or reactions?",
+                "options": [
+                    "Charmed",
+                    "Grappled",
+                    "Incapacitated",
+                    "Prone"
+                ],
+                "answer": 2
+            },
+            {
+                "id": "m4",
+                "difficulty": 2,
+                "question": "What is the range of a normal melee weapon attack?",
+                "options": [
+                    "5 feet",
+                    "15 feet",
+                    "30 feet",
+                    "60 feet"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "m5",
+                "difficulty": 2,
+                "question": "What does a natural 20 on a weapon attack usually do?",
+                "options": [
+                    "Miss automatically",
+                    "Deal a critical hit",
+                    "End the encounter",
+                    "Grant another action"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "m6",
+                "difficulty": 2,
+                "question": "Which class prepares spells using Wisdom?",
+                "options": [
+                    "Wizard",
+                    "Cleric",
+                    "Bard",
+                    "Sorcerer"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "c1",
+                "difficulty": 3,
+                "question": "A frightened creature has disadvantage on what while the source is visible?",
+                "options": [
+                    "Attack rolls and ability checks",
+                    "Saving throws only",
+                    "Armor Class",
+                    "Initiative rolls"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "c2",
+                "difficulty": 3,
+                "question": "How long does a standard round of combat represent?",
+                "options": [
+                    "1 second",
+                    "6 seconds",
+                    "30 seconds",
+                    "1 minute"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "c3",
+                "difficulty": 3,
+                "question": "What can a rogue use to deal Sneak Attack damage?",
+                "options": [
+                    "Any spell",
+                    "A finesse or ranged weapon",
+                    "Only a greatsword",
+                    "Only an unarmed strike"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "c4",
+                "difficulty": 3,
+                "question": "What happens when a creature reaches 0 hit points?",
+                "options": [
+                    "It is always dead",
+                    "It falls unconscious if it is not killed outright",
+                    "It gains temporary hit points",
+                    "It immediately takes a long rest"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "c5",
+                "difficulty": 3,
+                "question": "What kind of check is used to sneak past a guard?",
+                "options": [
+                    "Athletics",
+                    "Insight",
+                    "Stealth",
+                    "Medicine"
+                ],
+                "answer": 2
+            },
+            {
+                "id": "c6",
+                "difficulty": 3,
+                "question": "Which action lets you prepare a response to a future trigger?",
+                "options": [
+                    "Dash",
+                    "Ready",
+                    "Help",
+                    "Search"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "a1",
+                "difficulty": 4,
+                "question": "A spellcaster is concentrating when they take damage. What do they make?",
+                "options": [
+                    "A death save",
+                    "A concentration Constitution save",
+                    "An initiative check",
+                    "A Charisma check"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "a2",
+                "difficulty": 4,
+                "question": "What is the usual maximum number of death saving throw successes needed to stabilize?",
+                "options": [
+                    "1",
+                    "2",
+                    "3",
+                    "5"
+                ],
+                "answer": 2
+            },
+            {
+                "id": "a3",
+                "difficulty": 4,
+                "question": "What does a grappled creature's speed become?",
+                "options": [
+                    "0",
+                    "5 feet",
+                    "Half speed",
+                    "It doubles"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "a4",
+                "difficulty": 4,
+                "question": "Which spell is a classic reaction used to negate another spell?",
+                "options": [
+                    "Counterspell",
+                    "Bless",
+                    "Misty Step",
+                    "Detect Magic"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "a5",
+                "difficulty": 4,
+                "question": "What does cover primarily improve?",
+                "options": [
+                    "Hit points",
+                    "Armor Class and Dexterity saves",
+                    "Spell slots",
+                    "Movement speed"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "a6",
+                "difficulty": 4,
+                "question": "What is the name for the distance a creature can jump with a running start?",
+                "options": [
+                    "Long jump",
+                    "High jump",
+                    "Bounded leap",
+                    "Dash jump"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "e1",
+                "difficulty": 5,
+                "question": "A creature is invisible. What does attacking it normally impose?",
+                "options": [
+                    "Advantage",
+                    "Disadvantage",
+                    "No roll",
+                    "Automatic critical hit"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "e2",
+                "difficulty": 5,
+                "question": "What type of action is used to stabilize an adjacent unconscious creature with a healer's kit?",
+                "options": [
+                    "Action",
+                    "Bonus action",
+                    "Reaction",
+                    "Free action"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "e3",
+                "difficulty": 5,
+                "question": "What does the restrained condition impose?",
+                "options": [
+                    "Advantage on attacks against the target and disadvantage for it",
+                    "Only speed 0",
+                    "Disadvantage on attacks and Dexterity saves, and attacks against it have advantage",
+                    "It cannot speak"
+                ],
+                "answer": 2
+            },
+            {
+                "id": "e4",
+                "difficulty": 5,
+                "question": "When does a held spell require a concentration check?",
+                "options": [
+                    "When the caster takes damage",
+                    "Every six seconds",
+                    "When the caster speaks",
+                    "Never"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "e5",
+                "difficulty": 5,
+                "question": "What is the name of the rule that lets a character use a reaction to reduce incoming damage?",
+                "options": [
+                    "Evasion",
+                    "Uncanny Dodge",
+                    "Second Wind",
+                    "Deflect Missiles"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "e6",
+                "difficulty": 5,
+                "question": "Which save most often resists a dragon's breath weapon?",
+                "options": [
+                    "Strength",
+                    "Dexterity",
+                    "Intelligence",
+                    "Charisma"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "x1",
+                "difficulty": 6,
+                "question": "A monster has legendary actions. When can it use them?",
+                "options": [
+                    "Only on its own turn",
+                    "At the end of another creature's turn",
+                    "Only before initiative",
+                    "Only after a short rest"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "x2",
+                "difficulty": 6,
+                "question": "What happens to a spell requiring concentration when the caster becomes incapacitated?",
+                "options": [
+                    "The spell ends",
+                    "The spell doubles",
+                    "The spell pauses",
+                    "The spell targets the caster"
+                ],
+                "answer": 0
+            },
+            {
+                "id": "x3",
+                "difficulty": 6,
+                "question": "What is the key difference between a spell attack roll and a spell save?",
+                "options": [
+                    "The target rolls for a spell attack",
+                    "The caster rolls for a spell attack; the target rolls the save",
+                    "They are identical",
+                    "Neither can miss"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "x4",
+                "difficulty": 6,
+                "question": "A creature has resistance to a damage type. What happens to damage of that type?",
+                "options": [
+                    "It is doubled",
+                    "It is halved, rounded down",
+                    "It is ignored completely",
+                    "It becomes healing"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "x5",
+                "difficulty": 6,
+                "question": "What kind of rest normally restores all spent Hit Dice?",
+                "options": [
+                    "Short rest",
+                    "Long rest",
+                    "Breather",
+                    "Meditation"
+                ],
+                "answer": 1
+            },
+            {
+                "id": "x6",
+                "difficulty": 6,
+                "question": "What must a creature do to end the frightened condition caused by a spell?",
+                "options": [
+                    "Move closer to the source",
+                    "Succeed on the spell's specified save or meet its ending condition",
+                    "Drop to 0 hit points",
+                    "Use a bonus action"
+                ],
+                "answer": 1
+            }
+        ];
         const SESSION_LENGTH = 30;
         const HIGH_SCORE_KEY = 'soloDndQuizHighScores';
         const SESSION_STATE_KEY = 'soloDndQuizSession';
-        const questions = [{ "id": "s1", "difficulty": 1, "type": "direct", "question": "How many sides does a standard d20 have?", "answer": "20" }, { "id": "s2", "difficulty": 1, "type": "direct", "question": "How far can a level 1 character move per turn by default?", "answer": "30 ft" }, { "id": "s3", "difficulty": 1, "type": "choice", "question": "Which die is most commonly used for a weapon attack roll?", "options": ["d4", "d6", "d20", "d100"], "answer": 2 }, { "id": "s4", "difficulty": 1, "type": "choice", "question": "Which ability score is associated with a fighter's physical power?", "options": ["Strength", "Wisdom", "Charisma", "Intelligence"], "answer": 0 }, { "id": "s5", "difficulty": 1, "type": "direct", "question": "How many actions does a character normally get on their turn?", "answer": "1" }, { "id": "s6", "difficulty": 1, "type": "choice", "question": "What does AC stand for?", "options": ["Action Check", "Armor Class", "Attack Charge", "Arcane Control"], "answer": 1 }, { "id": "m1", "difficulty": 2, "type": "choice", "question": "Which spell is used for healing?", "options": ["Healing Word", "Guidance", "Fire Bolt", "Magic Missile"], "answer": 0 }, { "id": "m2", "difficulty": 2, "type": "direct", "question": "What bonus is added to a d20 roll when a character is proficient with a skill?", "answer": "proficiency bonus" }, { "id": "m3", "difficulty": 2, "type": "choice", "question": "Which condition prevents a creature from taking actions or reactions?", "options": ["Charmed", "Grappled", "Incapacitated", "Prone"], "answer": 2 }, { "id": "m4", "difficulty": 2, "type": "choice", "question": "What is the range of a normal melee weapon attack?", "options": ["5 feet", "15 feet", "30 feet", "60 feet"], "answer": 0 }, { "id": "m5", "difficulty": 2, "type": "direct", "question": "What does a natural 20 on a weapon attack usually do?", "answer": "critical hit" }, { "id": "m6", "difficulty": 2, "type": "choice", "question": "Which class prepares spells using Wisdom?", "options": ["Wizard", "Cleric", "Bard", "Sorcerer"], "answer": 1 }, { "id": "c1", "difficulty": 3, "type": "choice", "question": "A frightened creature has disadvantage on what while the source is visible?", "options": ["Attack rolls and ability checks", "Saving throws only", "Armor Class", "Initiative rolls"], "answer": 0 }, { "id": "c2", "difficulty": 3, "type": "direct", "question": "How long does a standard round of combat represent?", "answer": "6 seconds" }, { "id": "c3", "difficulty": 3, "type": "choice", "question": "What can a rogue use to deal Sneak Attack damage?", "options": ["Any spell", "A finesse or ranged weapon", "Only a greatsword", "Only an unarmed strike"], "answer": 1 }, { "id": "c4", "difficulty": 3, "type": "choice", "question": "What happens when a creature reaches 0 hit points?", "options": ["It is always dead", "It falls unconscious if it is not killed outright", "It gains temporary hit points", "It immediately takes a long rest"], "answer": 1 }, { "id": "c5", "difficulty": 3, "type": "direct", "question": "What kind of check is used to sneak past a guard?", "answer": "stealth" }, { "id": "c6", "difficulty": 3, "type": "choice", "question": "Which action lets you prepare a response to a future trigger?", "options": ["Dash", "Ready", "Help", "Search"], "answer": 1 }, { "id": "a1", "difficulty": 4, "type": "choice", "question": "A spellcaster is concentrating when they take damage. What do they make?", "options": ["A death save", "A concentration Constitution save", "An initiative check", "A Charisma check"], "answer": 1 }, { "id": "a2", "difficulty": 4, "type": "direct", "question": "What is the usual maximum number of death saving throw successes needed to stabilize?", "answer": "3" }, { "id": "a3", "difficulty": 4, "type": "choice", "question": "What does a grappled creature's speed become?", "options": ["0", "5 feet", "Half speed", "It doubles"], "answer": 0 }, { "id": "a4", "difficulty": 4, "type": "choice", "question": "Which spell is a classic reaction used to negate another spell?", "options": ["Counterspell", "Bless", "Misty Step", "Detect Magic"], "answer": 0 }, { "id": "a5", "difficulty": 4, "type": "choice", "question": "What does cover primarily improve?", "options": ["Hit points", "Armor Class and Dexterity saves", "Spell slots", "Movement speed"], "answer": 1 }, { "id": "a6", "difficulty": 4, "type": "direct", "question": "What is the name for the distance a creature can jump with a running start?", "answer": "long jump" }, { "id": "e1", "difficulty": 5, "type": "choice", "question": "A creature is invisible. What does attacking it normally impose?", "options": ["Advantage", "Disadvantage", "No roll", "Automatic critical hit"], "answer": 1 }, { "id": "e2", "difficulty": 5, "type": "direct", "question": "What type of action is used to stabilize an adjacent unconscious creature with a healer's kit?", "answer": "action" }, { "id": "e3", "difficulty": 5, "type": "choice", "question": "What does the restrained condition impose?", "options": ["Advantage on attacks against the target and disadvantage for it", "Only speed 0", "Disadvantage on attacks and Dexterity saves, and attacks against it have advantage", "It cannot speak"], "answer": 2 }, { "id": "e4", "difficulty": 5, "type": "choice", "question": "When does a held spell require a concentration check?", "options": ["When the caster takes damage", "Every six seconds", "When the caster speaks", "Never"], "answer": 0 }, { "id": "e5", "difficulty": 5, "type": "direct", "question": "What is the name of the rule that lets a character use a reaction to reduce incoming damage?", "answer": "uncanny dodge" }, { "id": "e6", "difficulty": 5, "type": "choice", "question": "Which save most often resists a dragon's breath weapon?", "options": ["Strength", "Dexterity", "Intelligence", "Charisma"], "answer": 1 }, { "id": "x1", "difficulty": 6, "type": "choice", "question": "A monster has legendary actions. When can it use them?", "options": ["Only on its own turn", "At the end of another creature's turn", "Only before initiative", "Only after a short rest"], "answer": 1 }, { "id": "x2", "difficulty": 6, "type": "direct", "question": "What happens to a spell requiring concentration when the caster becomes incapacitated?", "answer": "the spell ends" }, { "id": "x3", "difficulty": 6, "type": "choice", "question": "What is the key difference between a spell attack roll and a spell save?", "options": ["The target rolls for a spell attack", "The caster rolls for a spell attack; the target rolls the save", "They are identical", "Neither can miss"], "answer": 1 }, { "id": "x4", "difficulty": 6, "type": "choice", "question": "A creature has resistance to a damage type. What happens to damage of that type?", "options": ["It is doubled", "It is halved, rounded down", "It is ignored completely", "It becomes healing"], "answer": 1 }, { "id": "x5", "difficulty": 6, "type": "direct", "question": "What kind of rest normally restores all spent Hit Dice?", "answer": "long rest" }, { "id": "x6", "difficulty": 6, "type": "choice", "question": "What must a creature do to end the frightened condition caused by a spell?", "options": ["Move closer to the source", "Succeed on the spell's specified save or meet its ending condition", "Drop to 0 hit points", "Use a bonus action"], "answer": 1 }];
-        const directChoices = {
-            s1: ["6", "8", "20", "100"], s2: ["10 ft", "20 ft", "30 ft", "60 ft"],
-            s5: ["None", "1", "2", "3"], m2: ["Proficiency bonus", "Armor bonus", "Spell bonus", "Level bonus"],
-            m5: ["Miss automatically", "Deal a critical hit", "End the encounter", "Grant another action"],
-            c2: ["1 second", "6 seconds", "30 seconds", "1 minute"], c5: ["Athletics", "Insight", "Stealth", "Medicine"],
-            a2: ["1", "2", "3", "5"], a6: ["Long jump", "High jump", "Bounded leap", "Dash jump"],
-            e2: ["Action", "Bonus action", "Reaction", "Free action"], e5: ["Evasion", "Uncanny Dodge", "Second Wind", "Deflect Missiles"],
-            x2: ["The spell ends", "The spell doubles", "The spell pauses", "The spell targets the caster"],
-            x5: ["Short rest", "Long rest", "Breather", "Meditation"]
-        };
-        Object.entries(directChoices).forEach(([id, options]) => {
-            const question = questions.find(item => item.id === id);
-            if (question) {
-                question.type = 'choice';
-                question.options = options;
-                question.answer = options.indexOf({
-                    s1: '20', s2: '30 ft', s5: '1', m2: 'Proficiency bonus',
-                    m5: 'Deal a critical hit', c2: '6 seconds', c5: 'Stealth',
-                    a2: '3', a6: 'Long jump', e2: 'Action', e5: 'Uncanny Dodge',
-                    x2: 'The spell ends', x5: 'Long rest'
-                }[id]);
-            }
-        });
-        questions.forEach(question => { question.correctOption = question.options[question.answer]; });
         let session = [], questionIndex = 0, sessionScore = 0, acceptingAnswer = false;
+
         const $ = id => document.getElementById(id);
-        function updateTotal() { $('total-score').textContent = sessionScore.toLocaleString(); }
-        function saveSessionState() { localStorage.setItem(SESSION_STATE_KEY, JSON.stringify({ session, questionIndex, nextQuestionId: session[questionIndex]?.id || null, sessionScore })); }
-        function clearSessionState() { localStorage.removeItem(SESSION_STATE_KEY); }
+
+        function updateTotal() {
+            $('total-score').textContent = sessionScore.toLocaleString();
+        }
+
+        function saveSessionState() {
+            localStorage.setItem(SESSION_STATE_KEY, JSON.stringify({ session, questionIndex, nextQuestionId: session[questionIndex]?.id || null, sessionScore }));
+        }
+
+        function clearSessionState() {
+            localStorage.removeItem(SESSION_STATE_KEY);
+        }
+
         function loadSessionState() {
             try {
                 const saved = JSON.parse(localStorage.getItem(SESSION_STATE_KEY));
@@ -270,7 +726,7 @@
 
                 const restoredSession = saved.session.map(savedQuestion => {
                     const source = questions.find(question => question.id === savedQuestion.id);
-                    return source ? { ...source, ...savedQuestion, correctOption: source.correctOption } : null;
+                    return source ? { ...source, ...savedQuestion, correctOption: source.options[source.answer] } : null;
                 });
                 if (restoredSession.some(question => !question?.options || question.correctOption === undefined)) return false;
 
@@ -296,25 +752,103 @@
                 return false;
             }
         }
-        function updateStartButton() { $('start-button').textContent = localStorage.getItem(SESSION_STATE_KEY) ? 'Resume quiz' : 'Start quiz'; }
-        function shuffle(items) { return [...items].sort(() => Math.random() - 0.5); }
+
+        function updateStartButton() {
+            $('start-button').textContent = localStorage.getItem(SESSION_STATE_KEY) ? 'Resume quiz' : 'Start quiz';
+        }
+
+        function shuffle(items) {
+            return [...items].sort(() => Math.random() - 0.5);
+        }
+
         function buildSession() {
             const quotas = { 1: 8, 2: 5, 3: 6, 4: 4, 5: 4, 6: 3 };
             return shuffle(Object.entries(quotas).flatMap(([difficulty, count]) => shuffle(questions.filter(q => q.difficulty === Number(difficulty))).slice(0, count)));
         }
+
         function renderQuestion() {
             const current = session[questionIndex]; acceptingAnswer = true;
             $('progress').textContent = `Question ${questionIndex + 1} of ${SESSION_LENGTH}`;
             $('difficulty').textContent = `Difficulty ${current.difficulty} / 6`;
-            $('question').textContent = current.question; $('feedback').textContent = ''; $('feedback').className = 'feedback'; $('continue-button').classList.add('hidden');
+            $('question').textContent = current.question;
+            $('feedback').textContent = '';
+            $('feedback').className = 'feedback';
+            $('continue-button').classList.add('hidden');
             $('choices').innerHTML = '';
-            shuffle(current.options).forEach((option, index) => { const button = document.createElement('button'); button.className = 'choice'; button.type = 'button'; button.textContent = `${String.fromCharCode(65 + index)}: ${option}`; button.onclick = () => grade(option); $('choices').appendChild(button); });
+            shuffle(current.options).forEach((option, index) => {
+                const button = document.createElement('button');
+                const label = document.createElement('span');
+                const text = document.createElement('span');
+                button.className = 'choice';
+                button.type = 'button';
+                label.className = 'choice-label';
+                label.textContent = String.fromCharCode(65 + index);
+                text.className = 'choice-text';
+                text.textContent = option;
+                button.append(label, text);
+                button.onclick = () => grade(option, button);
+                $('choices').appendChild(button);
+            });
         }
-        function grade(answer) { if (!acceptingAnswer) return; acceptingAnswer = false; const current = session[questionIndex]; const correct = answer === current.correctOption; const earned = correct ? current.difficulty * 100 : 0; sessionScore += earned; updateTotal(); questionIndex += 1; saveSessionState(); $('feedback').textContent = correct ? `Correct. +${earned} points` : `Incorrect. Correct answer: ${current.correctOption}`; $('feedback').classList.add(correct ? 'correct' : 'incorrect'); document.querySelectorAll('.choice').forEach(button => button.disabled = true); $('continue-button').classList.remove('hidden'); }
-        function nextQuestion() { if (questionIndex >= SESSION_LENGTH) return finishSession(); saveSessionState(); renderQuestion(); }
-        function finishSession() { const completedScore = sessionScore; const scores = JSON.parse(localStorage.getItem(HIGH_SCORE_KEY) || '[]'); scores.push({ score: completedScore, date: new Date().toISOString() }); scores.sort((a, b) => b.score - a.score); localStorage.setItem(HIGH_SCORE_KEY, JSON.stringify(scores.slice(0, 10))); clearSessionState(); sessionScore = 0; $('quiz-screen').classList.add('hidden'); $('start-screen').classList.remove('hidden'); $('start-button').textContent = `Play again (${completedScore.toLocaleString()} session points)`; updateTotal(); }
-        $('start-button').addEventListener('click', () => { if (!loadSessionState()) { session = buildSession(); questionIndex = 0; sessionScore = 0; saveSessionState(); } $('start-screen').classList.add('hidden'); $('quiz-screen').classList.remove('hidden'); if (questionIndex >= SESSION_LENGTH) finishSession(); else renderQuestion(); });
+
+        function grade(answer, selectedButton) {
+            if (!acceptingAnswer) return;
+
+            acceptingAnswer = false;
+            const current = session[questionIndex];
+            const correct = answer === current.correctOption;
+            const earned = correct ? current.difficulty * 100 : 0;
+            sessionScore += earned; updateTotal(); questionIndex += 1;
+            saveSessionState();
+            selectedButton.classList.add('selected');
+            document.querySelectorAll('.choice').forEach(button => button.disabled = true);
+            $('feedback').textContent = correct ? `Correct. +${earned}` : `Incorrect. Correct answer: ${current.correctOption}`;
+            $('feedback').classList.add(correct ? 'correct' : 'incorrect');
+            $('continue-button').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            if (questionIndex >= SESSION_LENGTH) {
+                return finishSession();
+            }
+
+            saveSessionState();
+            renderQuestion();
+        }
+
+        function finishSession() {
+            const completedScore = sessionScore;
+            const scores = JSON.parse(localStorage.getItem(HIGH_SCORE_KEY) || '[]');
+            scores.push({ score: completedScore, date: new Date().toISOString() });
+            scores.sort((a, b) => b.score - a.score);
+            localStorage.setItem(HIGH_SCORE_KEY, JSON.stringify(scores.slice(0, 10)));
+            clearSessionState();
+            sessionScore = 0;
+            $('quiz-screen').classList.add('hidden');
+            $('start-screen').classList.remove('hidden');
+            $('start-button').textContent = `Play again (${completedScore.toLocaleString()} session points)`;
+            updateTotal();
+        }
+
+        $('start-button').addEventListener('click', () => {
+            if (!loadSessionState()) {
+                session = buildSession();
+                questionIndex = 0;
+                sessionScore = 0;
+                saveSessionState();
+            }
+
+            $('start-screen').classList.add('hidden');
+            $('quiz-screen').classList.remove('hidden');
+            if (questionIndex >= SESSION_LENGTH) {
+                finishSession();
+            } else {
+                renderQuestion();
+            }
+        });
+
         $('continue-button').addEventListener('click', nextQuestion);
+        $('start-button').disabled = false;
         updateStartButton();
         updateTotal();
     </script>

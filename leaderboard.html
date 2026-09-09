@@ -101,8 +101,7 @@
             <div class="brand">DM Quiz Leaderboard</div>
             <nav><a href="dm-quiz.html">Back to Quiz</a></nav>
         </header>
-        <main><span class="eyebrow">Top sessions</span>
-            <h1>Leaderboard</h1>
+        <main>
             <section class="board">
                 <div class="board-head"><span>Rank / session</span><span>Score</span></div>
                 <div id="entries"></div><button id="clear" class="clear">Clear local scores</button>
@@ -111,7 +110,24 @@
     </div>
     <script>
         const key = 'soloDndQuizHighScores', entries = document.getElementById('entries');
-        function render() { const scores = JSON.parse(localStorage.getItem(key) || '[]'); entries.innerHTML = ''; if (!scores.length) { entries.innerHTML = '<div class="empty">No sessions recorded yet. Your chair is waiting.</div>'; return; } scores.forEach((item, index) => { const row = document.createElement('div'); row.className = 'entry'; const date = new Date(item.date); row.innerHTML = `<div class="rank">${String(index + 1).padStart(2, '0')}</div><div><strong>DM Session</strong><div class="date">${date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</div></div><div class="score">${Number(item.score).toLocaleString()}</div>`; entries.appendChild(row); }); }
+        function render() {
+            const scores = JSON.parse(localStorage.getItem(key) || '[]');
+            entries.innerHTML = '';
+            if (!scores.length) {
+                entries.innerHTML = '<div class="empty">No sessions recorded yet. Your chair is waiting.</div>';
+                document.getElementById('clear').classList.add('hidden');
+                return;
+            }
+
+            scores.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = 'entry';
+                const date = new Date(item.date);
+                row.innerHTML = `<div class="rank">${String(index + 1).padStart(2, '0')}</div><div><strong>DM Session</strong><div class="date">${date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</div></div><div class="score">${Number(item.score).toLocaleString()}</div>`;
+                entries.appendChild(row);
+            });
+        }
+
         document.getElementById('clear').addEventListener('click', () => { if (confirm('Clear all saved quiz scores?')) { localStorage.removeItem(key); render(); } }); render();
     </script>
 </body>
