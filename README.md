@@ -11,8 +11,8 @@ Furthermore there's also the DM quiz, which lets DMs test their DnD (5.5) knowle
 
 ## How to use
 
-* Open `solo_dnd.html` in your browser for the solo DM tracker
-* Open `dm-quiz.html` in your browser for the DM quiz
+* Open [`solo-dnd.html`](https://samtun.github.io/Solo-DnD-Tracker/solo-dnd.html) in your browser for the solo DM tracker
+* Open [`dm-quiz.html`](https://samtun.github.io/Solo-DnD-Tracker/dm_quiz.html) in your browser for the DM quiz
 
 ## Features
 
