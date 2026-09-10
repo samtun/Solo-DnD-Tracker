@@ -27,7 +27,7 @@ Open [`solo-dnd.html`](https://samtun.github.io/Solo-DnD-Tracker/solo-dnd.html)
 
 A quiz for DnD 5.5 rules.
 
-Open [`dm-quiz.html`](https://samtun.github.io/Solo-DnD-Tracker/dm_quiz.html)
+Open [`dm-quiz.html`](https://samtun.github.io/Solo-DnD-Tracker/dm-quiz.html)
 
 ![Example](example_quiz.png)
 
