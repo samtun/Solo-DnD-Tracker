@@ -127,7 +127,7 @@
 
         #top-ruler .ruler-label {
             top: 0;
-            width: 40px;
+            width: var(--grid-size);
             padding-right: 3px;
             border-left: 1px solid var(--border);
             text-align: right;
@@ -135,7 +135,7 @@
 
         #left-ruler .ruler-label {
             left: 0;
-            width: 40px;
+            width: var(--grid-size);
             height: 16px;
             text-align: left;
             padding-left: 3px;
@@ -489,6 +489,10 @@
             <button class="menu-btn" onclick="document.getElementById('bg-import').click()">🖼️ Set Background
                 Image</button>
             <button class="menu-btn" onclick="clearBackground()" style="margin-top:-5px;">🚫 Clear Background</button>
+            <label class="row" for="grid-size-input" style="justify-content: space-between; margin-top: 5px;">
+                Grid Size (px)
+                <input type="number" id="grid-size-input" value="40" min="1" step="1" style="width: 70px;">
+            </label>
 
             <hr class="menu-hr">
 
@@ -566,15 +570,21 @@
         // System Initialization & State
         const LOG = document.getElementById('log');
         const GRID = document.getElementById('grid');
-        const PIXELS_PER_FT = 8; // 5ft = 40px
+        let gridSize = 40;
+
+        function pixelsPerFoot() {
+            return gridSize / 5;
+        }
 
         function initializeRulers() {
             const topRuler = document.getElementById('top-ruler');
             const leftRuler = document.getElementById('left-ruler');
-            const gridSizeInFeet = 3000 / PIXELS_PER_FT;
+            topRuler.innerHTML = '';
+            leftRuler.innerHTML = '';
+            const gridSizeInFeet = 3000 / pixelsPerFoot();
 
             for (let feet = 5; feet <= gridSizeInFeet; feet += 5) {
-                const offset = (feet / 5 - 1) * 40;
+                const offset = (feet / 5 - 1) * gridSize;
 
                 const topLabel = document.createElement('span');
                 topLabel.className = 'ruler-label';
@@ -584,7 +594,7 @@
 
                 const leftLabel = document.createElement('span');
                 leftLabel.className = 'ruler-label';
-                leftLabel.style.top = (offset + 40) + 'px';
+                leftLabel.style.top = (offset + gridSize) + 'px';
                 leftLabel.textContent = feet;
                 leftRuler.appendChild(leftLabel);
             }
@@ -669,6 +679,30 @@
             applyBackground();
         }
 
+        function setGridSize(value) {
+            const newSize = Number(value);
+            if (!Number.isFinite(newSize) || newSize <= 0) {
+                document.getElementById('grid-size-input').value = gridSize;
+                return;
+            }
+
+            gridSize = newSize;
+            document.documentElement.style.setProperty('--grid-size', `${gridSize}px`);
+            initializeRulers();
+            document.querySelectorAll('.grid-item').forEach(el => {
+                const scale = pixelsPerFoot();
+                el.style.width = (Number(el.dataset.w) * scale) + 'px';
+                el.style.height = (Number(el.dataset.h) * scale) + 'px';
+                el.style.left = (Number(el.dataset.x) * scale) + 'px';
+                el.style.top = (Number(el.dataset.y) * scale) + 'px';
+            });
+            applyBackground();
+        }
+
+        document.getElementById('grid-size-input').addEventListener('change', event => {
+            setGridSize(event.target.value);
+        });
+
         function applyBackground() {
             if (currentBgUrl) {
                 GRID.style.backgroundImage = `
@@ -704,6 +738,7 @@
                 map: elements,
                 log: LOG.innerHTML,
                 bgUrl: currentBgUrl,
+                gridSize,
                 initiative: initiativeList,
                 activeTurn: activeTurnIndex
             };
@@ -726,6 +761,11 @@
                     const state = JSON.parse(e.target.result);
                     GRID.innerHTML = '';
                     hideTooltip();
+
+                    if (state.gridSize !== undefined) {
+                        document.getElementById('grid-size-input').value = state.gridSize;
+                        setGridSize(state.gridSize);
+                    }
 
                     if (state.map) {
                         state.map.forEach(i => {
@@ -908,8 +948,8 @@
             const nX = parseFloat(document.getElementById('edit-x').value);
             const nY = parseFloat(document.getElementById('edit-y').value);
             activeElement.dataset.x = nX; activeElement.dataset.y = nY;
-            activeElement.style.left = (nX * PIXELS_PER_FT) + "px";
-            activeElement.style.top = (nY * PIXELS_PER_FT) + "px";
+            activeElement.style.left = (nX * pixelsPerFoot()) + "px";
+            activeElement.style.top = (nY * pixelsPerFoot()) + "px";
 
             const nC = document.getElementById('edit-color').value;
             activeElement.dataset.color = nC;
@@ -920,13 +960,13 @@
                 const nW = parseFloat(document.getElementById('edit-w').value);
                 const nH = parseFloat(document.getElementById('edit-h').value);
                 activeElement.dataset.w = nW; activeElement.dataset.h = nH;
-                activeElement.style.width = (nW * PIXELS_PER_FT) + "px";
-                activeElement.style.height = (nH * PIXELS_PER_FT) + "px";
+                activeElement.style.width = (nW * pixelsPerFoot()) + "px";
+                activeElement.style.height = (nH * pixelsPerFoot()) + "px";
             } else {
                 const nS = parseFloat(document.getElementById('edit-size').value);
                 activeElement.dataset.w = nS; activeElement.dataset.h = nS;
-                activeElement.style.width = (nS * PIXELS_PER_FT) + "px";
-                activeElement.style.height = (nS * PIXELS_PER_FT) + "px";
+                activeElement.style.width = (nS * pixelsPerFoot()) + "px";
+                activeElement.style.height = (nS * pixelsPerFoot()) + "px";
 
                 const initItem = initiativeList.find(i => i.id === activeElement.dataset.id);
                 if (initItem) {
@@ -985,12 +1025,12 @@
                 if (!dragThreshold) {
                     showTooltip(draggingToken, e);
                 } else {
-                    let snapX = Math.max(0, Math.round(parseFloat(draggingToken.style.left) / 40) * 40);
-                    let snapY = Math.max(0, Math.round(parseFloat(draggingToken.style.top) / 40) * 40);
+                    let snapX = Math.max(0, Math.round(parseFloat(draggingToken.style.left) / gridSize) * gridSize);
+                    let snapY = Math.max(0, Math.round(parseFloat(draggingToken.style.top) / gridSize) * gridSize);
                     draggingToken.style.left = snapX + "px";
                     draggingToken.style.top = snapY + "px";
-                    draggingToken.dataset.x = snapX / PIXELS_PER_FT;
-                    draggingToken.dataset.y = snapY / PIXELS_PER_FT;
+                    draggingToken.dataset.x = snapX / pixelsPerFoot();
+                    draggingToken.dataset.y = snapY / pixelsPerFoot();
                 }
                 draggingToken.style.zIndex = "";
                 draggingToken = null;
@@ -1064,10 +1104,10 @@
             const id = existingId || Date.now().toString(36) + Math.random().toString(36).substring(2);
 
             el.className = `grid-item ${type}`;
-            el.style.width = (w_ft * PIXELS_PER_FT) + "px";
-            el.style.height = (h_ft * PIXELS_PER_FT) + "px";
-            el.style.left = (x_ft * PIXELS_PER_FT) + "px";
-            el.style.top = (y_ft * PIXELS_PER_FT) + "px";
+            el.style.width = (w_ft * pixelsPerFoot()) + "px";
+            el.style.height = (h_ft * pixelsPerFoot()) + "px";
+            el.style.left = (x_ft * pixelsPerFoot()) + "px";
+            el.style.top = (y_ft * pixelsPerFoot()) + "px";
             el.innerText = name;
 
             el.dataset.id = id;
