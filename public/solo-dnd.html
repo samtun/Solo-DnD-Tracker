@@ -489,6 +489,10 @@
             <button class="menu-btn" onclick="document.getElementById('bg-import').click()">🖼️ Set Background
                 Image</button>
             <button class="menu-btn" onclick="clearBackground()" style="margin-top:-5px;">🚫 Clear Background</button>
+            <label class="row" for="background-scale-input" style="justify-content: space-between; margin-top: 5px;">
+                Background Scale (%)
+                <input type="number" id="background-scale-input" value="100" min="1" step="1" style="width: 70px;">
+            </label>
             <label class="row" for="grid-size-input" style="justify-content: space-between; margin-top: 5px;">
                 Grid Size (px)
                 <input type="number" id="grid-size-input" value="40" min="1" step="1" style="width: 70px;">
@@ -603,6 +607,8 @@
         initializeRulers();
 
         let currentBgUrl = '';
+        let backgroundImageSize = null;
+        let backgroundScale = 100;
         let initiativeList = [];
         let activeTurnIndex = 0;
 
@@ -667,15 +673,39 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                currentBgUrl = e.target.result;
-                applyBackground();
+                setBackgroundImage(e.target.result);
             };
             reader.readAsDataURL(file);
             event.target.value = '';
         }
 
         function clearBackground() {
-            currentBgUrl = '';
+            setBackgroundImage('');
+        }
+
+        function setBackgroundImage(url) {
+            currentBgUrl = url;
+            backgroundImageSize = null;
+            applyBackground();
+
+            if (!url) return;
+            const image = new Image();
+            image.onload = () => {
+                if (currentBgUrl !== url) return;
+                backgroundImageSize = { width: image.naturalWidth, height: image.naturalHeight };
+                applyBackground();
+            };
+            image.src = url;
+        }
+
+        function setBackgroundScale(value) {
+            const newScale = Number(value);
+            if (!Number.isFinite(newScale) || newScale <= 0) {
+                document.getElementById('background-scale-input').value = backgroundScale;
+                return;
+            }
+
+            backgroundScale = newScale;
             applyBackground();
         }
 
@@ -703,13 +733,20 @@
             setGridSize(event.target.value);
         });
 
+        document.getElementById('background-scale-input').addEventListener('change', event => {
+            setBackgroundScale(event.target.value);
+        });
+
         function applyBackground() {
             if (currentBgUrl) {
                 GRID.style.backgroundImage = `
                 linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
                 linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px),
                 url('${currentBgUrl}')`;
-                GRID.style.backgroundSize = `var(--grid-size) var(--grid-size), var(--grid-size) var(--grid-size), auto`;
+                const imageSize = backgroundImageSize
+                    ? `${backgroundImageSize.width * backgroundScale / 100}px ${backgroundImageSize.height * backgroundScale / 100}px`
+                    : 'auto';
+                GRID.style.backgroundSize = `var(--grid-size) var(--grid-size), var(--grid-size) var(--grid-size), ${imageSize}`;
                 GRID.style.backgroundPosition = `top left, top left, top left`;
                 GRID.style.backgroundRepeat = `repeat, repeat, no-repeat`;
             } else {
@@ -738,6 +775,7 @@
                 map: elements,
                 log: LOG.innerHTML,
                 bgUrl: currentBgUrl,
+                backgroundScale,
                 gridSize,
                 initiative: initiativeList,
                 activeTurn: activeTurnIndex
@@ -766,6 +804,11 @@
                         document.getElementById('grid-size-input').value = state.gridSize;
                         setGridSize(state.gridSize);
                     }
+                    backgroundScale = 100;
+                    document.getElementById('background-scale-input').value = backgroundScale;
+                    if (state.backgroundScale !== undefined) {
+                        setBackgroundScale(state.backgroundScale);
+                    }
 
                     if (state.map) {
                         state.map.forEach(i => {
@@ -777,8 +820,7 @@
                         LOG.scrollTop = LOG.scrollHeight;
                     }
                     if (state.bgUrl !== undefined) {
-                        currentBgUrl = state.bgUrl;
-                        applyBackground();
+                        setBackgroundImage(state.bgUrl);
                     }
                     if (state.initiative !== undefined) {
                         initiativeList = state.initiative;
@@ -901,7 +943,7 @@
         let activeElement = null;
         const tooltip = document.getElementById('item-tooltip');
 
-        function showTooltip(el, e) {
+        function showTooltip(el) {
             activeElement = el;
             const isRoom = el.dataset.type === 'room';
 
@@ -924,13 +966,23 @@
                 document.getElementById('edit-hp').value = initData ? initData.hp : '';
             }
 
-            const mainArea = document.getElementById('main-area').getBoundingClientRect();
-            let tLeft = (e.clientX - mainArea.left + 15);
-            let tTop = (e.clientY - mainArea.top + 15);
+            tooltip.classList.remove('hidden');
+
+            const containerRect = mapContainer.getBoundingClientRect();
+            const itemRect = el.getBoundingClientRect();
+            const maxLeft = mapContainer.scrollLeft + mapContainer.clientWidth - tooltip.offsetWidth;
+            const maxTop = mapContainer.scrollTop + mapContainer.clientHeight - tooltip.offsetHeight;
+            const tLeft = Math.min(
+                Math.max(itemRect.right - containerRect.left + mapContainer.scrollLeft + 15, mapContainer.scrollLeft),
+                Math.max(mapContainer.scrollLeft, maxLeft)
+            );
+            const tTop = Math.min(
+                Math.max(itemRect.top - containerRect.top + mapContainer.scrollTop + 15, mapContainer.scrollTop),
+                Math.max(mapContainer.scrollTop, maxTop)
+            );
 
             tooltip.style.left = tLeft + 'px';
             tooltip.style.top = tTop + 'px';
-            tooltip.classList.remove('hidden');
         }
 
         function hideTooltip() {
@@ -1023,7 +1075,7 @@
         document.addEventListener('mouseup', (e) => {
             if (draggingToken) {
                 if (!dragThreshold) {
-                    showTooltip(draggingToken, e);
+                    showTooltip(draggingToken);
                 } else {
                     let snapX = Math.max(0, Math.round(parseFloat(draggingToken.style.left) / gridSize) * gridSize);
                     let snapY = Math.max(0, Math.round(parseFloat(draggingToken.style.top) / gridSize) * gridSize);
@@ -1135,7 +1187,7 @@
             } else {
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    showTooltip(el, e);
+                    showTooltip(el);
                 });
             }
 
