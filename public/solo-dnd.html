@@ -127,7 +127,7 @@
 
         #top-ruler .ruler-label {
             top: 0;
-            width: 40px;
+            width: var(--grid-size);
             padding-right: 3px;
             border-left: 1px solid var(--border);
             text-align: right;
@@ -135,7 +135,7 @@
 
         #left-ruler .ruler-label {
             left: 0;
-            width: 40px;
+            width: var(--grid-size);
             height: 16px;
             text-align: left;
             padding-left: 3px;
@@ -489,6 +489,14 @@
             <button class="menu-btn" onclick="document.getElementById('bg-import').click()">🖼️ Set Background
                 Image</button>
             <button class="menu-btn" onclick="clearBackground()" style="margin-top:-5px;">🚫 Clear Background</button>
+            <label class="row" for="background-scale-input" style="justify-content: space-between; margin-top: 5px;">
+                Background Scale (%)
+                <input type="number" id="background-scale-input" value="100" min="1" step="1" style="width: 70px;">
+            </label>
+            <label class="row" for="grid-size-input" style="justify-content: space-between; margin-top: 5px;">
+                Grid Size (px)
+                <input type="number" id="grid-size-input" value="40" min="1" step="1" style="width: 70px;">
+            </label>
 
             <hr class="menu-hr">
 
@@ -566,15 +574,21 @@
         // System Initialization & State
         const LOG = document.getElementById('log');
         const GRID = document.getElementById('grid');
-        const PIXELS_PER_FT = 8; // 5ft = 40px
+        let gridSize = 40;
+
+        function pixelsPerFoot() {
+            return gridSize / 5;
+        }
 
         function initializeRulers() {
             const topRuler = document.getElementById('top-ruler');
             const leftRuler = document.getElementById('left-ruler');
-            const gridSizeInFeet = 3000 / PIXELS_PER_FT;
+            topRuler.innerHTML = '';
+            leftRuler.innerHTML = '';
+            const gridSizeInFeet = 3000 / pixelsPerFoot();
 
             for (let feet = 5; feet <= gridSizeInFeet; feet += 5) {
-                const offset = (feet / 5 - 1) * 40;
+                const offset = (feet / 5 - 1) * gridSize;
 
                 const topLabel = document.createElement('span');
                 topLabel.className = 'ruler-label';
@@ -584,7 +598,7 @@
 
                 const leftLabel = document.createElement('span');
                 leftLabel.className = 'ruler-label';
-                leftLabel.style.top = (offset + 40) + 'px';
+                leftLabel.style.top = (offset + gridSize) + 'px';
                 leftLabel.textContent = feet;
                 leftRuler.appendChild(leftLabel);
             }
@@ -593,6 +607,8 @@
         initializeRulers();
 
         let currentBgUrl = '';
+        let backgroundImageSize = null;
+        let backgroundScale = 100;
         let initiativeList = [];
         let activeTurnIndex = 0;
 
@@ -657,17 +673,69 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                currentBgUrl = e.target.result;
-                applyBackground();
+                setBackgroundImage(e.target.result);
             };
             reader.readAsDataURL(file);
             event.target.value = '';
         }
 
         function clearBackground() {
-            currentBgUrl = '';
+            setBackgroundImage('');
+        }
+
+        function setBackgroundImage(url) {
+            currentBgUrl = url;
+            backgroundImageSize = null;
+            applyBackground();
+
+            if (!url) return;
+            const image = new Image();
+            image.onload = () => {
+                if (currentBgUrl !== url) return;
+                backgroundImageSize = { width: image.naturalWidth, height: image.naturalHeight };
+                applyBackground();
+            };
+            image.src = url;
+        }
+
+        function setBackgroundScale(value) {
+            const newScale = Number(value);
+            if (!Number.isFinite(newScale) || newScale <= 0) {
+                document.getElementById('background-scale-input').value = backgroundScale;
+                return;
+            }
+
+            backgroundScale = newScale;
             applyBackground();
         }
+
+        function setGridSize(value) {
+            const newSize = Number(value);
+            if (!Number.isFinite(newSize) || newSize <= 0) {
+                document.getElementById('grid-size-input').value = gridSize;
+                return;
+            }
+
+            gridSize = newSize;
+            document.documentElement.style.setProperty('--grid-size', `${gridSize}px`);
+            initializeRulers();
+            document.querySelectorAll('.grid-item').forEach(el => {
+                const scale = pixelsPerFoot();
+                el.style.width = (Number(el.dataset.w) * scale) + 'px';
+                el.style.height = (Number(el.dataset.h) * scale) + 'px';
+                el.style.left = (Number(el.dataset.x) * scale) + 'px';
+                el.style.top = (Number(el.dataset.y) * scale) + 'px';
+            });
+            applyBackground();
+        }
+
+        document.getElementById('grid-size-input').addEventListener('change', event => {
+            setGridSize(event.target.value);
+        });
+
+        document.getElementById('background-scale-input').addEventListener('change', event => {
+            setBackgroundScale(event.target.value);
+        });
 
         function applyBackground() {
             if (currentBgUrl) {
@@ -675,7 +743,10 @@
                 linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
                 linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px),
                 url('${currentBgUrl}')`;
-                GRID.style.backgroundSize = `var(--grid-size) var(--grid-size), var(--grid-size) var(--grid-size), auto`;
+                const imageSize = backgroundImageSize
+                    ? `${backgroundImageSize.width * backgroundScale / 100}px ${backgroundImageSize.height * backgroundScale / 100}px`
+                    : 'auto';
+                GRID.style.backgroundSize = `var(--grid-size) var(--grid-size), var(--grid-size) var(--grid-size), ${imageSize}`;
                 GRID.style.backgroundPosition = `top left, top left, top left`;
                 GRID.style.backgroundRepeat = `repeat, repeat, no-repeat`;
             } else {
@@ -704,6 +775,8 @@
                 map: elements,
                 log: LOG.innerHTML,
                 bgUrl: currentBgUrl,
+                backgroundScale,
+                gridSize,
                 initiative: initiativeList,
                 activeTurn: activeTurnIndex
             };
@@ -727,6 +800,16 @@
                     GRID.innerHTML = '';
                     hideTooltip();
 
+                    if (state.gridSize !== undefined) {
+                        document.getElementById('grid-size-input').value = state.gridSize;
+                        setGridSize(state.gridSize);
+                    }
+                    backgroundScale = 100;
+                    document.getElementById('background-scale-input').value = backgroundScale;
+                    if (state.backgroundScale !== undefined) {
+                        setBackgroundScale(state.backgroundScale);
+                    }
+
                     if (state.map) {
                         state.map.forEach(i => {
                             createMapElement(i.type, i.name, parseInt(i.w), parseInt(i.h), parseInt(i.x), parseInt(i.y), i.color, i.id);
@@ -737,8 +820,7 @@
                         LOG.scrollTop = LOG.scrollHeight;
                     }
                     if (state.bgUrl !== undefined) {
-                        currentBgUrl = state.bgUrl;
-                        applyBackground();
+                        setBackgroundImage(state.bgUrl);
                     }
                     if (state.initiative !== undefined) {
                         initiativeList = state.initiative;
@@ -861,7 +943,7 @@
         let activeElement = null;
         const tooltip = document.getElementById('item-tooltip');
 
-        function showTooltip(el, e) {
+        function showTooltip(el) {
             activeElement = el;
             const isRoom = el.dataset.type === 'room';
 
@@ -884,13 +966,23 @@
                 document.getElementById('edit-hp').value = initData ? initData.hp : '';
             }
 
-            const mainArea = document.getElementById('main-area').getBoundingClientRect();
-            let tLeft = (e.clientX - mainArea.left + 15);
-            let tTop = (e.clientY - mainArea.top + 15);
+            tooltip.classList.remove('hidden');
+
+            const containerRect = mapContainer.getBoundingClientRect();
+            const itemRect = el.getBoundingClientRect();
+            const maxLeft = mapContainer.scrollLeft + mapContainer.clientWidth - tooltip.offsetWidth;
+            const maxTop = mapContainer.scrollTop + mapContainer.clientHeight - tooltip.offsetHeight;
+            const tLeft = Math.min(
+                Math.max(itemRect.right - containerRect.left + mapContainer.scrollLeft + 15, mapContainer.scrollLeft),
+                Math.max(mapContainer.scrollLeft, maxLeft)
+            );
+            const tTop = Math.min(
+                Math.max(itemRect.top - containerRect.top + mapContainer.scrollTop + 15, mapContainer.scrollTop),
+                Math.max(mapContainer.scrollTop, maxTop)
+            );
 
             tooltip.style.left = tLeft + 'px';
             tooltip.style.top = tTop + 'px';
-            tooltip.classList.remove('hidden');
         }
 
         function hideTooltip() {
@@ -908,8 +1000,8 @@
             const nX = parseFloat(document.getElementById('edit-x').value);
             const nY = parseFloat(document.getElementById('edit-y').value);
             activeElement.dataset.x = nX; activeElement.dataset.y = nY;
-            activeElement.style.left = (nX * PIXELS_PER_FT) + "px";
-            activeElement.style.top = (nY * PIXELS_PER_FT) + "px";
+            activeElement.style.left = (nX * pixelsPerFoot()) + "px";
+            activeElement.style.top = (nY * pixelsPerFoot()) + "px";
 
             const nC = document.getElementById('edit-color').value;
             activeElement.dataset.color = nC;
@@ -920,13 +1012,13 @@
                 const nW = parseFloat(document.getElementById('edit-w').value);
                 const nH = parseFloat(document.getElementById('edit-h').value);
                 activeElement.dataset.w = nW; activeElement.dataset.h = nH;
-                activeElement.style.width = (nW * PIXELS_PER_FT) + "px";
-                activeElement.style.height = (nH * PIXELS_PER_FT) + "px";
+                activeElement.style.width = (nW * pixelsPerFoot()) + "px";
+                activeElement.style.height = (nH * pixelsPerFoot()) + "px";
             } else {
                 const nS = parseFloat(document.getElementById('edit-size').value);
                 activeElement.dataset.w = nS; activeElement.dataset.h = nS;
-                activeElement.style.width = (nS * PIXELS_PER_FT) + "px";
-                activeElement.style.height = (nS * PIXELS_PER_FT) + "px";
+                activeElement.style.width = (nS * pixelsPerFoot()) + "px";
+                activeElement.style.height = (nS * pixelsPerFoot()) + "px";
 
                 const initItem = initiativeList.find(i => i.id === activeElement.dataset.id);
                 if (initItem) {
@@ -983,14 +1075,14 @@
         document.addEventListener('mouseup', (e) => {
             if (draggingToken) {
                 if (!dragThreshold) {
-                    showTooltip(draggingToken, e);
+                    showTooltip(draggingToken);
                 } else {
-                    let snapX = Math.max(0, Math.round(parseFloat(draggingToken.style.left) / 40) * 40);
-                    let snapY = Math.max(0, Math.round(parseFloat(draggingToken.style.top) / 40) * 40);
+                    let snapX = Math.max(0, Math.round(parseFloat(draggingToken.style.left) / gridSize) * gridSize);
+                    let snapY = Math.max(0, Math.round(parseFloat(draggingToken.style.top) / gridSize) * gridSize);
                     draggingToken.style.left = snapX + "px";
                     draggingToken.style.top = snapY + "px";
-                    draggingToken.dataset.x = snapX / PIXELS_PER_FT;
-                    draggingToken.dataset.y = snapY / PIXELS_PER_FT;
+                    draggingToken.dataset.x = snapX / pixelsPerFoot();
+                    draggingToken.dataset.y = snapY / pixelsPerFoot();
                 }
                 draggingToken.style.zIndex = "";
                 draggingToken = null;
@@ -1064,10 +1156,10 @@
             const id = existingId || Date.now().toString(36) + Math.random().toString(36).substring(2);
 
             el.className = `grid-item ${type}`;
-            el.style.width = (w_ft * PIXELS_PER_FT) + "px";
-            el.style.height = (h_ft * PIXELS_PER_FT) + "px";
-            el.style.left = (x_ft * PIXELS_PER_FT) + "px";
-            el.style.top = (y_ft * PIXELS_PER_FT) + "px";
+            el.style.width = (w_ft * pixelsPerFoot()) + "px";
+            el.style.height = (h_ft * pixelsPerFoot()) + "px";
+            el.style.left = (x_ft * pixelsPerFoot()) + "px";
+            el.style.top = (y_ft * pixelsPerFoot()) + "px";
             el.innerText = name;
 
             el.dataset.id = id;
@@ -1095,7 +1187,7 @@
             } else {
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    showTooltip(el, e);
+                    showTooltip(el);
                 });
             }
 
