@@ -8,8 +8,6 @@ This application aims to support DnD players that want to explore some DnD gamep
 
 Open [`solo-dnd.html`](https://samtun.github.io/Solo-DnD-Tracker/solo-dnd.html)
 
-![Example](example_engine.png)
-
 * A digital 5x5 ft game board
     * Add, edit and remove rooms to game board
     * Add, edit and remove tokens to game board (players, NPCs, etc...)
@@ -30,7 +28,11 @@ A quiz for DnD 5.5 rules.
 
 Open [`dm-quiz.html`](https://samtun.github.io/Solo-DnD-Tracker/dm-quiz.html)
 
-![Example](example_quiz.png)
-
 * 30 DnD questions for DMs
 * Leaderboard for high scores (saved locally in your browser only)
+
+## Language Forge
+
+Create languages for DnD worlds based on real world languages.
+
+Open [`language-forge.html`](https://samtun.github.io/Solo-DnD-Tracker/language-forge.html)
